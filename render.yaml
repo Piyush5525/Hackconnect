@@ -1,0 +1,55 @@
+# Render Blueprint: the whole app (frontend + API + WebSockets) as ONE web service.
+#
+# Deploy: push this repo to GitHub, then in Render: New > Blueprint > pick the repo. Fill the prompts marked "sync: false".
+# Why one service: HackConnect serves its own frontend, uses cookie sessions and WebSockets on the same address, and keeps its
+# data in one file on disk, so it must run as a single instance with a persistent disk (a disk needs a paid plan).
+services:
+  - type: web
+    name: hackconnect
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter            # persistent disks are not available on the free plan
+    region: oregon           # pick the region closest to your users (it cannot be changed later)
+    numInstances: 1          # do not scale out: the state file belongs to one instance
+    healthCheckPath: /health
+    autoDeploy: true
+    disk:
+      name: hackconnect-data
+      mountPath: /app/.hackconnect   # state.json, backups and generated keys live here
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HACKCONNECT_SECURE_COOKIES
+        value: "true"
+      - key: HACKCONNECT_LOG
+        value: json
+      - key: HACKCONNECT_AGENT_PROVIDER
+        value: demo
+      # Your public address, e.g. https://hackconnect.onrender.com (or your custom domain). Used for OAuth callbacks,
+      # emailed links and the assistant launcher download. Set it after you know the URL, then redeploy.
+      - key: HACKCONNECT_BASE_URL
+        sync: false
+      # Encrypts stored GitHub tokens. Generated once by Render; do not change it later or stored tokens become unreadable.
+      - key: HACKCONNECT_MASTER_KEY
+        generateValue: true
+      # Optional: real confirmation / password-reset emails (leave empty to print links in the logs instead).
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      # Optional: "Sign in with GitHub / Google".
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

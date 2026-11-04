@@ -1,0 +1,42 @@
+# Single-VPS production stack: app + Caddy (automatic HTTPS). All components are free/open source.
+#   cp .env.example .env   # set DOMAIN, HACKCONNECT_SECURE_COOKIES=true, etc.
+#   docker compose -f docker-compose.prod.yml up -d --build
+services:
+  hackconnect:
+    build: .
+    restart: unless-stopped
+    user: node      # already unprivileged, so the entrypoint skips its root-only ownership fix (this stack drops all capabilities)
+    env_file: .env
+    environment:
+      PORT: 4173
+      HACKCONNECT_SECURE_COOKIES: "true"
+      HACKCONNECT_LOG: json
+    volumes:
+      - hackconnect-data:/app/.hackconnect
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    expose: ["4173"]
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [hackconnect]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+  # Optional self-hosted voice/video (Apache-2.0). Enable with: --profile calls   (not yet wired into the UI; see docs/KNOWN_ISSUES.md)
+  livekit:
+    profiles: ["calls"]
+    image: livekit/livekit-server:latest
+    restart: unless-stopped
+    command: --dev --bind 0.0.0.0
+    ports: ["7880:7880", "7881:7881", "50000-50100:50000-50100/udp"]
+volumes:
+  hackconnect-data:
+  caddy-data:
+  caddy-config:
