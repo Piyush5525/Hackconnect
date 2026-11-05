@@ -12,7 +12,6 @@
     "e2e": "node e2e/editor.e2e.mjs",
     "e2e:events": "node e2e/events.e2e.mjs",
     "backup": "node scripts/backup.mjs",
-    "seed": "node scripts/seed.mjs",
     "test:all": "npm test && npm run e2e && npm run e2e:events && npm run e2e:auth && npm run e2e:projects && npm run e2e:signin",
     "loadtest": "node scripts/loadtest.mjs",
     "prepare": "node scripts/build-client.mjs",
@@ -23,6 +22,8 @@
     "build:icons": "node scripts/build-icons.mjs",
     "e2e:projects": "node e2e/projects.e2e.mjs",
     "e2e:signin": "node e2e/assistant-signin.e2e.mjs",
+    "e2e:call-invite": "node e2e/call-invite.e2e.mjs",
+    "e2e:call-volume": "node e2e/call-volume.e2e.mjs",
     "e2e:split": "node e2e/split.e2e.mjs",
     "build:frontend": "node scripts/build-frontend.mjs"
   },

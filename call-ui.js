@@ -8,6 +8,9 @@
   // Line icons (24px grid, currentColor) used by the call controls instead of emoji.
   const svg = (d, w = 18) => `<svg class="ic" viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const IC = {
+    vol: svg('<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>', 15),
+    volOff: svg('<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>', 15),
+    invite: svg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/>'),
     mic: svg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
     micOff: svg('<path d="M3 3l18 18"/><path d="M9 9v2a3 3 0 0 0 5.1 2.1M15 9.3V6a3 3 0 0 0-5.7-1.3"/><path d="M5 11a7 7 0 0 0 11.2 5.6M19 11a7 7 0 0 1-.6 2.8M12 18v3"/>'),
     cam: svg('<rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5l6-3.5v10l-6-3.5"/>'),
@@ -43,6 +46,7 @@
   }
   function handle(projectId, entry, m) {
     const inThis = call.active && call.projectId === projectId; const who = { name: m.user, initials: m.initials };
+    if (m.type === 'call.invite') { const mine = m.ids?.[me()?.id]; if (mine) showCallInvite({ noteId: mine, projectId: m.projectId, projectName: m.projectName, channel: m.channel, byName: m.byName }); return; }
     if (m.type === 'call.who') { if (inThis) send(projectId, { type: 'call.presence', to: m.from, channel: call.channel, mic: call.mic, cam: call.cam }); return; }
     if (m.type === 'call.presence' || m.type === 'call.here' || m.type === 'call.join') {
       entry.roster.set(m.from, { ...who, channel: m.channel, mic: m.mic !== false, cam: m.cam === true });
@@ -54,7 +58,7 @@
       }
       renderChannels(); return;
     }
-    if (m.type === 'call.state') { const r = entry.roster.get(m.from); if (r) { r.mic = m.mic; r.cam = m.cam; } const p = call.peers.get(m.from); if (p) { const was = p.sharing; p.mic = m.mic; p.cam = m.cam; p.sharing = Boolean(m.sharing); if (inThis && p.sharing && !was) { call.pinned = m.from; call.layout = 'speaker'; notify(`${p.name} is sharing their screen`); } if (inThis && !p.sharing && was && call.pinned === m.from) call.pinned = null; } drawStage(); renderChannels(); return; }
+    if (m.type === 'call.state') { const r = entry.roster.get(m.from); if (r) { r.mic = m.mic; r.cam = m.cam; } const p = call.peers.get(m.from); if (p) { const was = p.sharing; p.mic = m.mic; p.cam = m.cam; p.sharing = Boolean(m.sharing); if (inThis && p.sharing && !was) { notify(`${p.name} is sharing their screen`); } if (inThis && !p.sharing && was && call.pinned === m.from) call.pinned = null; } drawStage(); renderChannels(); return; }
     if (m.type === 'call.move') { if (call.active && call.projectId === projectId) { notify(`${m.user} moved you to ${chName(m.channel)}`); join(projectId, m.channel); } return; }
     if (m.type === 'call.leave') { entry.roster.delete(m.from); if (inThis) { dropPeer(m.from); drawStage(); } renderChannels(); return; }
     if (m.type === 'rtc' && inThis) onSignal(m);
@@ -68,7 +72,7 @@
     const pc = new RTCPeerConnection(ICE); p.pc = pc;
     if (initiator) { const a = pc.addTransceiver('audio', { direction: 'sendrecv' }); const v = pc.addTransceiver('video', { direction: 'sendrecv' }); bindSenders(p, a, v); }
     pc.onicecandidate = (e) => { if (e.candidate) send(call.projectId, { type: 'rtc', to: p.id, signal: { type: 'candidate', candidate: e.candidate } }); };
-    pc.ontrack = (e) => { p.stream.addTrack(e.track); watchLevel(p.stream, (l) => { p.level = l; pulse(p.id, l); if (l > 14) { p.lastSpoke = Date.now(); scheduleDock(); } }); drawStage(); };
+    pc.ontrack = (e) => { p.stream.addTrack(e.track); ensureAudio(p); watchLevel(p.stream, (l) => { p.level = l; pulse(p.id, l); if (l > 14) { p.lastSpoke = Date.now(); scheduleDock(); } }); drawStage(); };
     pc.onconnectionstatechange = () => { if (['failed', 'closed'].includes(pc.connectionState)) drawStage(); };
     return pc;
   }
@@ -79,7 +83,7 @@
     const p = peerRec(m.from, m.user); const s = m.signal; if (!p.pc) newPc(p, false);
     try { if (s.type === 'offer') { await p.pc.setRemoteDescription(s.sdp); { const ts = p.pc.getTransceivers(); const a = ts.find(t => t.receiver.track.kind === 'audio'); const v = ts.find(t => t.receiver.track.kind === 'video'); [a, v].forEach(t => { if (t) t.direction = 'sendrecv'; }); if (a && v) bindSenders(p, a, v); } const ans = await p.pc.createAnswer(); await p.pc.setLocalDescription(ans); send(call.projectId, { type: 'rtc', to: m.from, signal: { type: 'answer', sdp: ans } }); } else if (s.type === 'answer') await p.pc.setRemoteDescription(s.sdp); else if (s.type === 'candidate') await p.pc.addIceCandidate(s.candidate); } catch { /* stale signal */ }
   }
-  function dropPeer(id) { const p = call.peers.get(id); if (!p) return; try { p.pc?.close(); } catch { /* closed */ } call.peers.delete(id); if (call.pinned === id) call.pinned = null; }
+  function dropPeer(id) { const p = call.peers.get(id); if (!p) return; if (p.audio) { p.audio.srcObject = null; p.audio = null; } try { p.pc?.close(); } catch { /* closed */ } call.peers.delete(id); if (call.pinned === id) call.pinned = null; }
 
   // ---------- speaking detection ----------
   let ac; const watchers = new WeakMap();
@@ -114,12 +118,15 @@
     if (!navigator.mediaDevices?.getDisplayMedia) { notify('Your browser does not support screen sharing'); return; }
     try {
       call.screen = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' }, audio: false }); call.sharing = true; const track = call.screen.getVideoTracks()[0]; track.onended = restore;
-      call.peers.forEach(p => p.vSender?.replaceTrack(track)); call.pinned = 'self'; call.layout = 'speaker'; broadcastState(); drawStage(); notify('You are sharing your screen. Everyone in the call sees it.');
+      call.peers.forEach(p => p.vSender?.replaceTrack(track)); broadcastState(); drawStage(); notify('You are sharing your screen. Everyone in the call sees it.');
     } catch (e) { call.sharing = false; if (e.name !== 'NotAllowedError') notify(`Screen sharing failed: ${e.message}`); }
   }
 
   // ---------- stage (floating window or full screen) ----------
-  const tiles = () => [{ id: 'self', name: `${me().name} (you)`, stream: call.sharing && call.screen ? call.screen : call.local, mic: call.mic, cam: call.cam || call.sharing, share: call.sharing, self: true, last: call.selfSpoke || 0 }, ...[...call.peers.values()].map(p => ({ id: p.id, name: p.name, stream: p.stream, mic: p.mic, share: Boolean(p.sharing), last: p.lastSpoke || 0, cam: (p.cam === true || p.sharing) && p.stream.getVideoTracks().length > 0 }))];
+  // While you share, you get two tiles: your camera / avatar box and the shared screen, so you never disappear from your own call.
+  const tiles = () => [{ id: 'self', name: `${me().name} (you)`, stream: call.local, mic: call.mic, cam: call.cam, share: false, self: true, last: call.selfSpoke || 0 }, ...(call.sharing && call.screen ? [{ id: 'self-screen', name: `${me().name} (you)`, stream: call.screen, mic: true, cam: true, share: true, self: true, last: 0 }] : []), ...[...call.peers.values()].map(p => ({ id: p.id, name: p.name, stream: p.stream, mic: p.mic, share: Boolean(p.sharing), last: p.lastSpoke || 0, cam: (p.cam === true || p.sharing) && p.stream.getVideoTracks().length > 0 }))];
+  /** Size a shared-screen tile to the real shape of that screen (16:9, ultrawide, a single window...) so there are no black bars. */
+  const fitShare = (el, v) => { const set = () => { if (v.videoWidth && v.videoHeight) { el.style.setProperty('--ar', `${v.videoWidth} / ${v.videoHeight}`); el.style.setProperty('--ar-n', String(v.videoWidth / v.videoHeight)); } }; set(); if (!v.dataset.fit) { v.dataset.fit = 1; v.addEventListener('loadedmetadata', set); v.addEventListener('resize', set); } };
   const initials = (n) => String(n).replace(/\(you\)/, '').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   // Where the call is shown: 'dock' (compact tiles in the right panel, the default), 'popout' (floating window, on request) or 'full'.
   // With no side panel to dock into (other pages, narrow screens) the call falls back to the floating window so it can always be controlled.
@@ -129,11 +136,11 @@
   const scheduleDock = () => { if (dockTimer || !call.active || callMode() !== 'dock') return; dockTimer = setTimeout(() => { dockTimer = null; if (call.active && callMode() === 'dock' && visibleDock(tiles()).map(t => t.id).join() !== dockSig) drawStage(); }, 1200); };
   function visibleDock(list) {
     const rank = (t) => (t.id === call.pinned ? 1e15 : 0) + (t.share ? 1e14 : 0) + t.last + (t.cam ? 1 : 0);
-    const others = list.filter(t => !t.self).sort((a, b) => rank(b) - rank(a)); const me0 = list.find(t => t.self); let vis = others.slice(0, 4);
+    const others = list.filter(t => !t.self).sort((a, b) => rank(b) - rank(a)); const me0 = list.find(t => t.self && t.share) || list.find(t => t.self); let vis = others.slice(0, 4);
     if (me0) { if (vis.length < 4) vis.push(me0); else if (me0.cam || me0.share || me0.id === call.pinned) vis[3] = me0; }
     return vis;
   }
-  const act = { mic: () => toggleMic(), cam: () => toggleCam(), share: () => toggleShare(), leave: () => leave(),
+  const act = { mic: () => toggleMic(), cam: () => toggleCam(), share: () => toggleShare(), leave: () => leave(), invite: (btn) => openInvite(btn),
     layout: () => { call.layout = call.layout === 'grid' ? 'speaker' : 'grid'; drawStage(); },
     expand: () => { call.expanded = !call.expanded; document.body.classList.toggle('call-full', call.expanded); drawStage(); },
     popout: () => { call.popout = true; call.expanded = false; document.body.classList.remove('call-full'); const st = $('#callStage'); if (st) st.dataset.sized = ''; drawStage(); },
@@ -143,27 +150,27 @@
     if (!d) { d = document.createElement('div'); d.id = 'callDock'; const tabs = $('.side-tabs', aside); tabs ? tabs.after(d) : aside.prepend(d); }
     const list = tiles(); const vis = visibleDock(list); dockSig = vis.map(t => t.id).join(); const more = list.length - vis.length;
     const main = vis.length > 1 ? (vis.find(t => t.id === call.pinned) || vis.find(t => t.share && !t.self)) : null; const rest = main ? vis.filter(t => t !== main) : vis;
-    const tile = (t) => `<div class="ct ${t.cam ? '' : 'nocam'} ${t.share ? 'share' : ''} ${t.id === call.pinned ? 'pinned' : ''}" data-id="${esc(t.id)}" style="--c:${avColor(t.name)}" title="${t.id === call.pinned ? 'Click to shrink' : 'Click to enlarge'}"><video ${t.self ? 'muted' : ''} autoplay playsinline></video><div class="ct-av">${esc(initials(t.name))}</div><div class="ct-name">${t.mic ? '' : `<i class="mic-off">${IC.micOff.replace('width="18" height="18"', 'width="12" height="12"')}</i>`}${t.share ? `<i class="ct-sh">${IC.share}</i>` : ''}${esc(t.share && t.self ? 'Your screen' : t.name)}</div></div>`;
+    const tile = (t) => `<div class="ct ${t.cam ? '' : 'nocam'} ${t.share ? 'share' : ''} ${t.id === call.pinned ? 'pinned' : ''}" data-id="${esc(t.id)}" style="--c:${avColor(t.name)}" title="${t.id === call.pinned ? 'Click to shrink' : 'Click to enlarge'}"><video muted autoplay playsinline></video><div class="ct-av">${esc(initials(t.name))}</div><div class="ct-name">${!t.self && volPref(t.id).m ? `<i class="mic-off" title="Muted for you">${IC.volOff}</i>` : ''}${t.mic ? '' : `<i class="mic-off">${IC.micOff.replace('width="18" height="18"', 'width="12" height="12"')}</i>`}${t.share ? `<i class="ct-sh">${IC.share}</i>` : ''}${esc(t.share && t.self ? 'Your screen' : t.name)}</div>${t.self ? '' : `<button class="ct-vol" data-vol="${esc(t.id)}" title="Adjust ${esc(t.name)}'s volume" aria-label="Adjust volume">${IC.vol}</button>`}</div>`;
     const prev = new Map($$('.ct video', d).map(v => [v.closest('.ct').dataset.id, v]));
-    d.innerHTML = `<div class="cd"><div class="cd-head"><div class="cd-title"><b># ${esc(chName(call.channel))}</b><span>${list.length} in call · <span id="callTimer">00:00</span></span></div><div class="cd-hr"><button data-a="popout" title="Pop out into a floating window" aria-label="Pop out">${IC.popout}</button><button data-a="expand" title="Full screen" aria-label="Full screen">${IC.expand}</button></div></div>
+    d.innerHTML = `<div class="cd"><div class="cd-head"><div class="cd-title"><b># ${esc(chName(call.channel))}</b><span>${list.length} in call · <span id="callTimer">00:00</span></span></div><div class="cd-hr"><button data-a="invite" title="Invite teammates to this call" aria-label="Invite teammates">${IC.invite}</button><button data-a="popout" title="Pop out into a floating window" aria-label="Pop out">${IC.popout}</button><button data-a="expand" title="Full screen" aria-label="Full screen">${IC.expand}</button></div></div>
       <div class="cd-body">${main ? `<div class="cd-main">${tile(main)}</div>` : ''}<div class="cd-grid" data-n="${rest.length}">${rest.map(tile).join('')}</div>${more > 0 ? `<div class="cd-more">+${more} more in the call</div>` : ''}</div>
       <div class="cd-bar"><button class="cb ${call.mic ? '' : 'off'}" data-a="mic" title="${call.mic ? 'Mute' : 'Unmute'}" aria-label="${call.mic ? 'Mute' : 'Unmute'}">${call.mic ? IC.mic : IC.micOff}</button><button class="cb ${call.cam ? '' : 'off'}" data-a="cam" title="${call.cam ? 'Turn your video off' : 'Turn your video on'}" aria-label="Toggle video">${call.cam ? IC.cam : IC.camOff}</button><button class="cb ${call.sharing ? 'on' : ''}" data-a="share" title="${call.sharing ? 'Stop sharing' : 'Share your screen'}" aria-label="Share screen">${IC.screen}</button><button class="cb hang" data-a="leave" title="Leave call">${IC.leave}<span>Leave</span></button></div></div>`;
     $$('.ct', d).forEach(el => { const t = list.find(x => x.id === el.dataset.id); let v = $('video', el); const st0 = t?.stream; const old = prev.get(el.dataset.id); if (v && st0) { if (old && old.srcObject === st0) { v.replaceWith(old); v = old; } else v.srcObject = st0; v.play?.().catch(() => {}); } el.addEventListener('click', () => { call.pinned = call.pinned === el.dataset.id ? null : el.dataset.id; drawStage(); }); });
-    $$('[data-a]', d).forEach(b => b.addEventListener('click', () => act[b.dataset.a]()));
+    $$('[data-a]', d).forEach(b => b.addEventListener('click', () => act[b.dataset.a](b)));
   }
   function drawStage() {
     if (!call.active) return;
     if (callMode() === 'dock') { $('#callStage')?.remove(); drawDock(); return; }
     $('#callDock')?.remove(); let st = $('#callStage');
     if (!st) { st = document.createElement('div'); st.id = 'callStage'; document.body.appendChild(st); st.addEventListener('pointerdown', (e) => startResize(st, e)); }
-    st.className = `${call.expanded ? 'full' : 'mini'} layout-${call.layout}`; const list = tiles(); const main = call.layout === 'speaker' ? (list.find(t => t.id === call.pinned) || list.find(t => !t.self) || list[0]) : null; const rest = main ? list.filter(t => t !== main) : list;
-    const tile = (t, big) => `<div class="ct ${t.cam ? '' : 'nocam'} ${t.share ? 'share' : ''} ${t.id === call.pinned ? 'pinned' : ''}" data-id="${esc(t.id)}" style="--c:${avColor(t.name)}"><video ${t.self ? 'muted' : ''} autoplay playsinline></video><div class="ct-av">${esc(initials(t.name))}</div><div class="ct-name">${t.mic ? '' : `<i class="mic-off">${IC.micOff.replace('width="18" height="18"', 'width="12" height="12"')}</i>`}${t.share ? `<i class="ct-sh">${IC.share}</i>` : ''}${esc(t.share && t.self ? 'Your screen' : t.name)}</div><button class="ct-pin" data-pin="${esc(t.id)}" title="Pin / spotlight">${IC.pin}</button></div>`;
+    st.className = `${call.expanded ? 'full' : 'mini'} layout-${call.layout}`; const list = tiles(); const shareT = list.find(t => t.share); const pinT = list.find(t => t.id === call.pinned); const main = call.layout === 'speaker' ? (pinT || shareT || list.find(t => !t.self) || list[0]) : null; /* grid by default, also while sharing: pin a tile to spotlight it */ const rest = main ? list.filter(t => t !== main) : list;
+    const tile = (t, big) => `<div class="ct ${t.cam ? '' : 'nocam'} ${t.share ? 'share' : ''} ${t.id === call.pinned ? 'pinned' : ''}" data-id="${esc(t.id)}" style="--c:${avColor(t.name)}"><video muted autoplay playsinline></video><div class="ct-av">${esc(initials(t.name))}</div><div class="ct-name">${!t.self && volPref(t.id).m ? `<i class="mic-off" title="Muted for you">${IC.volOff}</i>` : ''}${t.mic ? '' : `<i class="mic-off">${IC.micOff.replace('width="18" height="18"', 'width="12" height="12"')}</i>`}${t.share ? `<i class="ct-sh">${IC.share}</i>` : ''}${esc(t.share && t.self ? 'Your screen' : t.name)}</div><button class="ct-pin" data-pin="${esc(t.id)}" title="Pin / spotlight">${IC.pin}</button></div>`;
     const prev = new Map($$('.ct video', st).map(v => [v.closest('.ct').dataset.id, v]));
-    st.innerHTML = `<div class="call-head"><div class="call-title"><b># ${esc(chName(call.channel))}</b><span class="call-sub" title="${esc(call.projectName)}">${call.expanded ? esc(call.projectName) + ' · ' : ''}${list.length} in call · <span id="callTimer">00:00</span></span></div><div class="call-head-r"><button data-a="dock" title="Back to the side panel" aria-label="Dock">${IC.dock}<span class="lbl">Dock</span></button><button data-a="layout" title="Switch grid / speaker view" aria-label="Switch layout">${call.layout === 'grid' ? IC.grid : IC.speaker}<span class="lbl">${call.layout === 'grid' ? 'Grid' : 'Speaker'}</span></button><button data-a="expand" title="${call.expanded ? 'Back to workspace' : 'Full screen'}" aria-label="${call.expanded ? 'Back' : 'Expand'}">${call.expanded ? IC.shrink : IC.expand}<span class="lbl">${call.expanded ? 'Back' : 'Expand'}</span></button></div></div>
-      <div class="call-body ${main ? 'with-main' : ''}" data-n="${list.length}">${main ? `<div class="call-main">${tile(main, true)}</div><div class="call-strip">${rest.map(t => tile(t)).join('')}</div>` : `<div class="call-grid" data-n="${Math.min(list.length, 9)}">${list.map(t => tile(t)).join('')}</div>`}</div>
-      ${call.expanded ? '' : '<i class="rz nw" data-rz="nw"></i><i class="rz ne" data-rz="ne"></i><i class="rz sw" data-rz="sw"></i><i class="rz se" data-rz="se"></i>'}<div class="call-bar2"><button class="cb ${call.mic ? '' : 'off'}" data-a="mic" title="Microphone">${call.mic ? IC.mic : IC.micOff}<span>${call.mic ? 'Mute' : 'Unmute'}</span></button><button class="cb ${call.cam ? '' : 'off'}" data-a="cam" title="${call.cam ? 'Turn your video off' : 'Turn your video on (others will see you)'}">${call.cam ? IC.cam : IC.camOff}<span>${call.cam ? 'Stop video' : 'Start video'}</span></button><button class="cb ${call.sharing ? 'on' : ''}" data-a="share" title="Share your screen">${IC.screen}<span>${call.sharing ? 'Stop sharing' : 'Share'}</span></button><button class="cb hang" data-a="leave" title="Leave call">${IC.leave}<span>Leave</span></button></div>`;
-    $$('.ct', st).forEach(el => { const t = list.find(x => x.id === el.dataset.id); let v = $('video', el); const s = t?.stream; const old = prev.get(el.dataset.id); if (v && s) { if (old && old.srcObject === s) { v.replaceWith(old); v = old; } else v.srcObject = s; v.play?.().catch(() => {}); } });
-    $$('[data-a]', st).forEach(b => b.addEventListener('click', () => act[b.dataset.a]()));
+    st.innerHTML = `<div class="call-head"><div class="call-title"><b># ${esc(chName(call.channel))}</b><span class="call-sub" title="${esc(call.projectName)}">${call.expanded ? esc(call.projectName) + ' · ' : ''}${list.length} in call · <span id="callTimer">00:00</span></span></div><div class="call-head-r">${call.expanded ? '' : `<button data-a="dock" title="Back to the side panel" aria-label="Dock">${IC.dock}<span class="lbl">Dock</span></button>`}<button data-a="layout" title="Switch grid / speaker view" aria-label="Switch layout">${call.layout === 'grid' ? IC.grid : IC.speaker}<span class="lbl">${call.layout === 'grid' ? 'Grid' : 'Speaker'}</span></button><button data-a="expand" title="${call.expanded ? 'Back to workspace' : 'Full screen'}" aria-label="${call.expanded ? 'Back' : 'Expand'}">${call.expanded ? IC.shrink : IC.expand}<span class="lbl">${call.expanded ? 'Back' : 'Expand'}</span></button></div></div>
+      <div class="call-body ${main ? 'with-main' : ''}" data-n="${list.length}">${main ? `<div class="call-main">${tile(main, true)}</div><div class="call-strip">${rest.map(t => tile(t)).join('')}</div>` : `<div class="call-grid ${list.some(t => t.share) ? 'has-share' : ''}" data-n="${Math.min(list.length, 9)}">${list.map(t => tile(t)).join('')}</div>`}</div>
+      ${call.expanded ? '' : '<i class="rz nw" data-rz="nw"></i><i class="rz ne" data-rz="ne"></i><i class="rz sw" data-rz="sw"></i><i class="rz se" data-rz="se"></i>'}<div class="call-bar2"><button class="cb ${call.mic ? '' : 'off'}" data-a="mic" title="Microphone">${call.mic ? IC.mic : IC.micOff}<span>${call.mic ? 'Mute' : 'Unmute'}</span></button><button class="cb ${call.cam ? '' : 'off'}" data-a="cam" title="${call.cam ? 'Turn your video off' : 'Turn your video on (others will see you)'}">${call.cam ? IC.cam : IC.camOff}<span>${call.cam ? 'Stop video' : 'Start video'}</span></button><button class="cb ${call.sharing ? 'on' : ''}" data-a="share" title="Share your screen">${IC.screen}<span>${call.sharing ? 'Stop sharing' : 'Share'}</span></button><button class="cb" data-a="invite" title="Invite teammates to this call">${IC.invite}<span>Invite</span></button><button class="cb hang" data-a="leave" title="Leave call">${IC.leave}<span>Leave</span></button></div>`;
+    $$('.ct', st).forEach(el => { const t = list.find(x => x.id === el.dataset.id); let v = $('video', el); const s = t?.stream; const old = prev.get(el.dataset.id); if (v && s) { if (old && old.srcObject === s) { v.replaceWith(old); v = old; } else v.srcObject = s; v.play?.().catch(() => {}); } if (v && el.classList.contains('share')) fitShare(el, v); });
+    $$('[data-a]', st).forEach(b => b.addEventListener('click', () => act[b.dataset.a](b)));
     $$('[data-pin]', st).forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); call.pinned = call.pinned === b.dataset.pin ? null : b.dataset.pin; if (call.pinned) call.layout = 'speaker'; drawStage(); }));
     dragify(st); if (!call.expanded) { if (!st.dataset.sized) { applyRect(st); st.dataset.sized = 1; } } else { st.dataset.sized = ''; Object.assign(st.style, { width: '', height: '', left: '', top: '', right: '', bottom: '' }); }
     $$('.ct', st).forEach(el => el.addEventListener('dblclick', () => { call.pinned = el.dataset.id; call.layout = 'speaker'; drawStage(); }));
@@ -211,8 +218,71 @@
   document.addEventListener('click', (e) => { const b = e.target.closest?.('#callBtn'); if (!b) return; e.stopImmediatePropagation(); const pid = HC.state.currentProject?.id; if (!pid) { notify('Open a project first to start a call'); return; } if (call.active) { call.expanded = !call.expanded; document.body.classList.toggle('call-full', call.expanded); drawStage(); } else join(pid, 'general'); }, true);
 
   // keep the roster socket in step with the open project; refresh the channel list when the panel appears
-  let lastPid = null; setInterval(() => { const pid = HC.state.currentProject?.id; if (pid && pid !== lastPid) { lastPid = pid; watch(pid); for (const [id, s] of sockets) if (id !== pid && !(call.active && call.projectId === id)) { s.ws.close(); sockets.delete(id); } } if (call.active) { const m = callMode(); if (m === 'dock' ? !$('#callDock .cd') : !$('#callStage')) drawStage(); } if (me()) { const box = $('#voiceChannels'); if (box && box.dataset.pid !== String(pid || '')) { box.dataset.pid = String(pid || ''); renderChannels(); } syncCallBtn(); } }, 700);
+  let lastPid = null; setInterval(() => { const pid = HC.state.currentProject?.id; if (pid && pid !== lastPid) { lastPid = pid; watch(pid); for (const [id, s] of sockets) if (id !== pid && !(call.active && call.projectId === id)) { s.ws?.close(); sockets.delete(id); } } if (call.active) { const m = callMode(); if (m === 'dock' ? !$('#callDock .cd') : !$('#callStage')) drawStage(); } if (me()) { const box = $('#voiceChannels'); if (box && box.dataset.pid !== String(pid || '')) { box.dataset.pid = String(pid || ''); renderChannels(); } syncCallBtn(); } }, 700);
   new MutationObserver(() => { const box = $('#voiceChannels'); const pid = HC.state.currentProject?.id || ''; if (box && box.dataset.pid !== pid) { box.dataset.pid = pid; renderChannels(); } }).observe(document.body, { childList: true, subtree: true });
   window.addEventListener('beforeunload', () => { if (call.active) send(call.projectId, { type: 'call.leave' }); });
+  // ---------- per-person volume: right-click a person (or hover and press the speaker) ----------
+  const VOL_KEY = 'hc.call.volumes';
+  const readVols = () => { try { return JSON.parse(localStorage.getItem(VOL_KEY) || '{}'); } catch { return {}; } };
+  const volPref = (id) => ({ v: 1, m: false, ...(readVols()[id] || {}) });
+  const saveVol = (id, patch) => { const all = readVols(); all[id] = { ...volPref(id), ...patch }; try { localStorage.setItem(VOL_KEY, JSON.stringify(all)); } catch { /* private mode */ } const p = call.peers.get(id); if (p?.audio) applyVol(p); };
+  const applyVol = (p) => { const pref = volPref(p.id); p.audio.volume = Math.max(0, Math.min(1, pref.v)); p.audio.muted = pref.m; };
+  function ensureAudio(p) { if (p.audio) return; const a = new Audio(); a.autoplay = true; a.srcObject = p.stream; p.audio = a; applyVol(p); a.play?.().catch(() => {}); }
+  let volMenu = null;
+  function openVolume(id, x, y) {
+    const p = call.peers.get(id); if (!p) return; if (volMenu) volMenu.close();
+    const m = document.createElement('div'); m.className = 'vol-menu'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-label', `Volume for ${p.name}`); document.body.appendChild(m);
+    const onDoc = (e) => { if (!m.contains(e.target)) close(); }; const onKey = (e) => { if (e.key === 'Escape') close(); };
+    let meter = null; function close() { clearInterval(meter); document.removeEventListener('mousedown', onDoc, true); document.removeEventListener('keydown', onKey, true); window.removeEventListener('blur', close); m.remove(); volMenu = null; }
+    volMenu = { close }; document.addEventListener('mousedown', onDoc, true); document.addEventListener('keydown', onKey, true); window.addEventListener('blur', close);
+    const draw = () => { const pref = volPref(id); const pct = Math.round(pref.v * 100); const pinned = call.pinned === id;
+      m.innerHTML = `<div class="vm-who"><span class="vm-av" style="--c:${avColor(p.name)}">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></div>
+        <div class="vm-meter" title="Live: how loud they are speaking right now"><span>Speaking</span><i></i></div>
+        <label class="vm-row"><span class="vm-ic">${pref.m || !pct ? IC.volOff : IC.vol}</span><input type="range" min="0" max="100" step="1" value="${pref.m ? 0 : pct}" aria-label="Volume"><output>${pref.m ? 0 : pct}%</output></label>
+        <button class="vm-btn" data-k="mute">${pref.m ? IC.vol : IC.volOff}<span>${pref.m ? 'Unmute for me' : 'Mute for me'}</span></button>
+        <button class="vm-btn" data-k="pin">${IC.pin}<span>${pinned ? 'Unpin' : 'Pin / spotlight'}</span></button>
+        <button class="vm-btn" data-k="reset">${IC.grid}<span>Reset volume</span></button><div class="vm-note">Only changes what you hear.</div>`;
+      const r = m.querySelector('input'); const out = m.querySelector('output');
+      r.addEventListener('input', () => { const v = Number(r.value) / 100; out.textContent = r.value + '%'; saveVol(id, { v, m: false }); m.querySelector('.vm-ic').innerHTML = v ? IC.vol : IC.volOff; });
+      r.addEventListener('change', () => { drawStage(); });
+      m.querySelector('[data-k="mute"]').addEventListener('click', () => { saveVol(id, { m: !volPref(id).m }); drawStage(); draw(); });
+      m.querySelector('[data-k="reset"]').addEventListener('click', () => { saveVol(id, { v: 1, m: false }); drawStage(); draw(); });
+      m.querySelector('[data-k="pin"]').addEventListener('click', () => { call.pinned = pinned ? null : id; call.layout = call.pinned ? 'speaker' : 'grid'; drawStage(); close(); }); };
+    meter = setInterval(() => { const mt = m.querySelector('.vm-meter'); if (!mt) return; const lv = Math.min(100, Math.round((call.peers.get(id)?.level || 0) * 2.4)); mt.firstElementChild.nextElementSibling.style.setProperty('--lv', lv + '%'); mt.classList.toggle('live', lv > 25); }, 90);    draw(); const w = m.offsetWidth, h = m.offsetHeight; m.style.left = Math.max(8, Math.min(innerWidth - w - 8, x)) + 'px'; m.style.top = Math.max(8, Math.min(innerHeight - h - 8, y)) + 'px';
+  }
+  document.addEventListener('contextmenu', (e) => { const ct = e.target.closest?.('#callStage .ct, #callDock .ct'); if (!ct || !call.active || !call.peers.has(ct.dataset.id)) return; e.preventDefault(); openVolume(ct.dataset.id, e.clientX, e.clientY); });
+  document.addEventListener('click', (e) => { const b = e.target.closest?.('.ct-vol'); if (!b) return; e.stopPropagation(); e.preventDefault(); const r = b.getBoundingClientRect(); openVolume(b.dataset.vol, r.left, r.bottom + 6); }, true);
+
+  // ---------- invite teammates into the call ----------
+  let invPop = null; const seenInvites = new Set(); let inviteToast = null;
+  async function openInvite(anchor) {
+    if (invPop) { const same = invPop.anchor === anchor; invPop.close(); if (same) return; }
+    if (!call.active) return; const pid = call.projectId; const channel = call.channel; const pop = document.createElement('div'); pop.className = 'inv-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Invite teammates to the call'); document.body.appendChild(pop);
+    const place = () => { const r = anchor.getBoundingClientRect(); const w = 300; pop.style.width = w + 'px'; pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px'; const below = r.bottom + 8 + pop.offsetHeight < innerHeight; pop.style.top = (below ? r.bottom + 8 : Math.max(8, r.top - 8 - pop.offsetHeight)) + 'px'; };
+    const onDoc = (e) => { if (!pop.contains(e.target) && !anchor.contains(e.target)) close(); }; const onKey = (e) => { if (e.key === 'Escape') close(); };
+    function close() { document.removeEventListener('mousedown', onDoc, true); document.removeEventListener('keydown', onKey, true); pop.remove(); invPop = null; }
+    invPop = { close, anchor }; document.addEventListener('mousedown', onDoc, true); document.addEventListener('keydown', onKey, true); pop.innerHTML = '<div class="inv-empty">Loading teammates…</div>'; place();
+    let members = []; try { members = (await HC.api(`/projects/${encodeURIComponent(pid)}/members`)).members.filter(m => m.id !== me()?.id); } catch (e) { pop.innerHTML = `<div class="inv-empty">${esc(e.message)}</div>`; return; }
+    if (!pop.isConnected) return; const roster = sockets.get(pid)?.roster; const inCall = (id) => call.peers.has(id) || (roster?.get(id)?.channel === channel);
+    if (!members.length) { pop.innerHTML = '<div class="inv-empty">Nobody else is in this project yet. Add teammates with <b>Invite</b> in the workspace toolbar first.</div>'; place(); return; }
+    pop.innerHTML = `<div class="inv-h"><b>Invite to ${esc(chName(channel))}</b><span>They get a message in their inbox with a button to join.</span></div><div class="inv-list">${members.map(m => `<label class="inv-row ${inCall(m.id) ? 'busy' : ''}"><input type="checkbox" value="${esc(m.id)}" ${inCall(m.id) ? 'disabled' : 'checked'}><span class="inv-av" style="--c:${avColor(m.name)}">${esc(initials(m.name))}</span><span class="inv-who"><b>${esc(m.name)}</b><small>@${esc(m.username || '')}</small></span>${inCall(m.id) ? '<i>In call</i>' : ''}</label>`).join('')}</div><div class="inv-foot"><button class="outline-button btn-sm" id="invAll">Clear</button><button class="primary-button btn-sm" id="invSend">Send invite</button></div>`; place();
+    const boxes = () => [...pop.querySelectorAll('input[type=checkbox]:not(:disabled)')]; const sync = () => { const n = boxes().filter(b => b.checked).length; const send = pop.querySelector('#invSend'); send.disabled = !n; send.textContent = n ? `Invite ${n}` : 'Pick someone'; pop.querySelector('#invAll').textContent = n === boxes().length ? 'Clear' : 'Select all'; }; boxes().forEach(b => b.addEventListener('change', sync)); sync();
+    pop.querySelector('#invAll').addEventListener('click', () => { const all = boxes().every(b => b.checked); boxes().forEach(b => { b.checked = !all; }); sync(); });
+    pop.querySelector('#invSend').addEventListener('click', async (e) => { const ids = boxes().filter(b => b.checked).map(b => b.value); if (!ids.length) return; e.target.disabled = true; try { const r = await HC.api(`/projects/${encodeURIComponent(pid)}/call-invite`, { method: 'POST', body: JSON.stringify({ channel, userIds: ids }) }); close(); notify(`Invited ${r.invited} teammate${r.invited === 1 ? '' : 's'} to the call`); } catch (err) { e.target.disabled = false; notify(err.message); } });
+  }
+  /** Open the project (if needed) and join the voice channel. Used by the inbox button and the live prompt. */
+  async function joinFromInvite(projectId, channel) {
+    if (HC.state.currentProject?.id !== projectId) { await window.HackConnectApp.openProject(projectId); for (let i = 0; i < 40 && !$('.collab-panel'); i++) await new Promise(r => setTimeout(r, 100)); }
+    await join(projectId, channel);
+  }
+  /** Live prompt: "Priya invited you to join the call" with Join / Dismiss. Shown once per invite. */
+  function showCallInvite({ noteId, projectId, projectName, channel, byName }) {
+    if (noteId) { if (seenInvites.has(noteId)) return; seenInvites.add(noteId); } if (call.active && call.projectId === projectId && call.channel === channel) return;
+    if (inviteToast) inviteToast.remove(); const t = document.createElement('div'); t.className = 'call-invite'; t.setAttribute('role', 'alert'); inviteToast = t;
+    t.innerHTML = `<span class="ci-ic">${IC.invite}</span><div class="ci-tx"><b>${esc(byName || 'A teammate')} invited you to a call</b><small>${esc(chName(channel))} · ${esc(projectName || 'project')}</small></div><button class="primary-button btn-sm" data-go>Join</button><button class="ci-x" data-no aria-label="Dismiss">✕</button>`; document.body.appendChild(t);
+    const done = () => { t.classList.add('out'); setTimeout(() => t.remove(), 220); if (inviteToast === t) inviteToast = null; clearTimeout(timer); }; const timer = setTimeout(done, 45000);
+    t.querySelector('[data-no]').addEventListener('click', done); t.querySelector('[data-go]').addEventListener('click', async () => { done(); if (noteId) HC.api('/notifications', { method: 'POST', body: '{}' }).catch(() => {}); await joinFromInvite(projectId, channel); });
+  }
+  HC.showCallInvite = showCallInvite; HC.joinCall = joinFromInvite;
   HC.call = { join, leave, state: call };
 })();

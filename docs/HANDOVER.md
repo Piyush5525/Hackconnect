@@ -4,7 +4,6 @@
 ```bash
 npm install
 npm start                 # http://localhost:4173, sign up (first account = admin). Windows: double-click start-hackconnect.cmd
-npm run seed              # optional demo event (stop the server first; --force wipes state)
 npm run test:all          # unit/integration (110 tests) + four real-browser acceptance scripts
 npm run loadtest          # collab latency check
 ```

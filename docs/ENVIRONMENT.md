@@ -27,7 +27,7 @@ Node does not load `.env` by itself; `server.mjs` reads it at start and never ov
 | `HACKCONNECT_ALLOW_PRIVATE_AI` | `true` locally, `false` when `HACKCONNECT_BASE_URL` is https | Whether users may point the assistant at private/loopback addresses such as Ollama on `localhost`. Keep `false` on a hosted server. Link-local/cloud-metadata addresses are always refused |
 | `DOMAIN` | none | Used by `docker-compose.prod.yml` / Caddy |
 | `HACKCONNECT_URL` | `http://127.0.0.1:4173` | Target for `scripts/smoke.mjs` |
-| `HACKCONNECT_STATE` | `.hackconnect/state.json` | State file used by `scripts/seed.mjs` |
+| `HACKCONNECT_STATE` | `.hackconnect/state.json` | State file location |
 | `HACKCONNECT_CONFIG_DIR` | `~/.hackconnect` | Where the Local Bridge stores its token |
 | `CLOUDFLARED` | `cloudflared` | Path to the free `cloudflared` binary used by `hackconnect expose` |
 

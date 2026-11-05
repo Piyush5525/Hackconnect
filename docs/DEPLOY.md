@@ -82,7 +82,7 @@ Caddy obtains and renews a free Let's Encrypt certificate automatically.
 HACKCONNECT_URL=https://hack.example.com node scripts/smoke.mjs
 curl -s https://hack.example.com/ready
 ```
-Then open the site, **sign up first with your own account: the first account becomes platform admin**. Create the demo event if you want one: stop the app, run `docker compose -f docker-compose.prod.yml run --rm hackconnect node scripts/seed.mjs`, start the app.
+Then open the site, **sign up first with your own account: the first account becomes platform admin**.
 
 ## 5b. Email and sign-in providers
 Set the `SMTP_*` variables for real confirmation/reset emails (a free Gmail app password or Brevo account works) and `GITHUB_CLIENT_*` / `GOOGLE_CLIENT_*` for social sign-in; `HACKCONNECT_BASE_URL` must be your public https URL. See `docs/ENVIRONMENT.md`. Run `npm run check:secrets` before every commit.

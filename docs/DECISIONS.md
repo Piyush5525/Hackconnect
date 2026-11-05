@@ -71,7 +71,7 @@ Two providers with a standard authorization-code + PKCE flow need about 150 line
 GitHub tokens are encrypted with AES-256-GCM using `HACKCONNECT_MASTER_KEY` or a generated `.hackconnect/master.key` (mode 0600). The key is kept out of the state file so a leaked backup alone does not reveal tokens. Rotation is not implemented: changing the key requires users to reconnect GitHub.
 
 ## ADR: No demo data in production paths
-A new installation starts empty. The original prototype's fake projects and "first user adopts them" behaviour were removed, and the Overview, Activity and sidebar are driven by real data. Hackathon demo content exists only in `scripts/seed.mjs`, which must be run on purpose.
+A new installation starts empty. The original prototype's fake projects and "first user adopts them" behaviour were removed, and the Overview, Activity and sidebar are driven by real data. There is no demo or sample data anywhere: every project, account and event is created by real people.
 
 ## ADR: Project page data from history, not git
 Contributors and activity come from the per-save edit history (with `uid` attribution), languages from stored file contents by bytes (GitHub-style categories). This works for projects that never touched git. A GitHub App with real commits is future work.
