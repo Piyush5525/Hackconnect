@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "npm install",
-  "buildCommand": "node scripts/build-frontend.mjs",
+  "buildCommand": "npm run build:client && node scripts/build-frontend.mjs --allow-placeholder",
   "outputDirectory": "dist",
   "cleanUrls": false,
   "rewrites": [
