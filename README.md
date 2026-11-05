@@ -98,9 +98,9 @@ flowchart LR
   V -->|"/api, /download, /t, /mcp<br/>rewritten (same address, normal cookies)"| R[Render<br/>Node backend]
   U ==>|"live sockets /ws /collab<br/>one-time ticket"| R
   R --> D[(Persistent disk<br/>state.json + backups)]
-  R -.optional.-> M[SMTP email]
-  R -.optional.-> O[GitHub / Google sign-in]
-  L[Local assistant launcher<br/>Claude Code / Codex] -. 127.0.0.1 .-> U
+  R -.->|optional| M[SMTP email]
+  R -.->|optional| O[GitHub / Google sign-in]
+  L[Local assistant launcher<br/>Claude Code / Codex] -.->|"runs on your computer"| U
   B[Local Bridge CLI] -->|Bearer token| R
   X[External agents<br/>Claude Code, Cursor] -->|MCP /mcp| R
 ```
@@ -177,7 +177,7 @@ stateDiagram-v2
   Draft --> Registration: publish
   Registration --> Hacking: start
   Hacking --> Submission
-  Submission --> Judging: deadline or manual<br/>(workspaces freeze, snapshot taken)
+  Submission --> Judging: deadline or manual, workspaces freeze
   Judging --> Results: scores normalised
   Results --> [*]
 ```
