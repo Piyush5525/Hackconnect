@@ -45,3 +45,14 @@ test('behind Render\'s HTTPS proxy: Secure session cookie, working health/ready 
     assert.equal(open, true, 'WebSocket with the public origin must be accepted');
   } finally { delete process.env.HACKCONNECT_BASE_URL; await app.close(); rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('vercel.json: every backend route is proxied to one Render address, and the build refuses the unedited placeholder', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const cfg = JSON.parse(read('vercel.json')); const dests = new Set(cfg.rewrites.map((r) => new URL(r.destination.replace(/:path\*$/, '')).origin));
+  assert.equal(dests.size, 1, 'all rewrites must target the same backend');
+  for (const route of ['/api/:path*', '/download/:path*', '/t/:path*', '/mcp', '/health']) assert.ok(cfg.rewrites.some((r) => r.source === route), `missing rewrite ${route}`);
+  assert.equal(cfg.outputDirectory, 'dist'); assert.match(cfg.buildCommand, /build-frontend/);
+  const out = spawnSync(process.execPath, [join(root, 'scripts', 'build-frontend.mjs')], { cwd: root, encoding: 'utf8' });
+  if ([...dests][0].includes('your-service')) assert.notEqual(out.status, 0, 'placeholder address must fail the build');
+  const env = Object.fromEntries(parse(read('render.yaml')).services[0].envVars.map((e) => [e.key, e])); assert.equal(env.HACKCONNECT_TRUST_PROXY.value, 'true');
+});

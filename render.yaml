@@ -1,8 +1,7 @@
-# Render Blueprint: the whole app (frontend + API + WebSockets) as ONE web service.
+# Render Blueprint: the BACKEND (API + WebSockets + data). The frontend is deployed separately on Vercel (see vercel.json and docs/DEPLOY.md).
 #
 # Deploy: push this repo to GitHub, then in Render: New > Blueprint > pick the repo. Fill the prompts marked "sync: false".
-# Why one service: HackConnect serves its own frontend, uses cookie sessions and WebSockets on the same address, and keeps its
-# data in one file on disk, so it must run as a single instance with a persistent disk (a disk needs a paid plan).
+# The backend keeps its data in one file on disk, so it must run as a single instance with a persistent disk (a disk needs a paid plan).
 services:
   - type: web
     name: hackconnect
@@ -26,10 +25,17 @@ services:
         value: json
       - key: HACKCONNECT_AGENT_PROVIDER
         value: demo
-      # Your public address, e.g. https://hackconnect.onrender.com (or your custom domain). Used for OAuth callbacks,
-      # emailed links and the assistant launcher download. Set it after you know the URL, then redeploy.
+      # The address people open: your VERCEL address, e.g. https://hackconnect.vercel.app (or your custom domain).
+      # Used for sign-in callbacks, emailed links and the assistant launcher. It is also the only site allowed to open live sockets.
       - key: HACKCONNECT_BASE_URL
         sync: false
+      # This backend's own address, e.g. https://hackconnect-api.onrender.com. Used by the CLI bridge / VS Code extension downloads
+      # (they talk to the backend directly because Vercel cannot carry WebSockets).
+      - key: HACKCONNECT_API_URL
+        sync: false
+      # Requests arrive through Vercel and Render's proxy: use the visitor address they report for rate limits.
+      - key: HACKCONNECT_TRUST_PROXY
+        value: "true"
       # Encrypts stored GitHub tokens. Generated once by Render; do not change it later or stored tokens become unreadable.
       - key: HACKCONNECT_MASTER_KEY
         generateValue: true

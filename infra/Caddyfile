@@ -1,0 +1,9 @@
+# Automatic HTTPS (free Let's Encrypt). Set DOMAIN in .env, e.g. DOMAIN=hack.example.com
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy hackconnect:4173
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}

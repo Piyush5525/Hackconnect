@@ -1,0 +1,48 @@
+{
+  "name": "hackconnect",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node --test test/*.test.mjs",
+    "build:client": "node scripts/build-client.mjs",
+    "e2e": "node e2e/editor.e2e.mjs",
+    "e2e:events": "node e2e/events.e2e.mjs",
+    "backup": "node scripts/backup.mjs",
+    "seed": "node scripts/seed.mjs",
+    "test:all": "npm test && npm run e2e && npm run e2e:events && npm run e2e:auth && npm run e2e:projects && npm run e2e:signin",
+    "loadtest": "node scripts/loadtest.mjs",
+    "prepare": "node scripts/build-client.mjs",
+    "e2e:auth": "node e2e/auth.e2e.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "verify:runner": "node scripts/verify-runner.mjs",
+    "launch": "node scripts/start.mjs",
+    "build:icons": "node scripts/build-icons.mjs",
+    "e2e:projects": "node e2e/projects.e2e.mjs",
+    "e2e:signin": "node e2e/assistant-signin.e2e.mjs",
+    "e2e:split": "node e2e/split.e2e.mjs",
+    "build:frontend": "node scripts/build-frontend.mjs"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.17",
+    "fflate": "^0.8.3",
+    "lib0": "^0.2.119",
+    "marked": "^18.1.3",
+    "monaco-editor": "^0.57.0",
+    "ws": "^8.18.0",
+    "y-monaco": "^0.1.6",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.33"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "^1.64.1",
+    "yaml": "^2.9.1"
+  },
+  "bin": {
+    "hackconnect": "bridge/cli.mjs"
+  }
+}

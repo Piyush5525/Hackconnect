@@ -1,0 +1,35 @@
+# Security model
+
+Target: OWASP ASVS L2 is **not yet met** (see "Gaps"). This document records what is implemented and verified by tests, and what is not.
+
+## Threat model and mitigations
+| Threat | Mitigation (implemented unless marked) |
+|---|---|
+| Malicious participant reads another team's code | Central policy layer (`lib/policy.mjs`, role x action matrix tests). Non-members get 404, not 403, so ids cannot be probed. Team workspaces are only visible to the team |
+| Participant edits after the deadline | Entering *judging* freezes every team workspace (REST, agent, MCP and CRDT writes all denied) and stores a final snapshot. Organizers can unfreeze |
+| Malicious judge / biased judging | Conflict-of-interest block (team members cannot score their team), blind mode hides names and members, per-judge assignments, scores validated against the rubric, per-judge normalisation, audit log |
+| Session theft / CSRF | Opaque random session tokens stored hashed (SHA-256), HttpOnly + SameSite=Lax (+Secure when configured). Every mutation needs `X-Requested-With`; WebSocket upgrades check `Origin` |
+| OAuth attacks | Authorization-code flow with PKCE (S256); `state` is random, single-use, expires in 10 min and is bound to the browser by an HttpOnly cookie (CSRF/replay tested); only **verified** provider emails are trusted; if a verified OAuth email matches a password account that was never email-verified, that password is erased and its sessions revoked (pre-registration takeover guard, tested); a provider identity can belong to one account only; the only login method cannot be unlinked; the GitHub access token is stored AES-256-GCM encrypted and never returned by the API |
+| Credential stuffing | scrypt password hashing, constant-work login (dummy hash for unknown emails), IP rate limit (10 attempts / 15 min), **per-account lockout** (5 failures = 10 minutes, stored in the state file so a restart does not reset it, cleared by a successful reset). *Gap:* the IP limiter is in-memory; no 2FA |
+| Account recovery abuse | Reset and confirmation tokens are random, stored hashed, single-use, expire (1 h / 24 h) and are never returned by the API; `forgot` answers identically for unknown emails and is throttled to one mail per minute per account; a reset signs out every device; mail headers are sanitised and SMTP bodies dot-stuffed |
+| Token abuse (Local Bridge, MCP) | Tokens are random, stored hashed, expire in 30 days, revocable. Bridge tokens only reach `/api/projects/*`, `/api/auth/me`, `/api/bootstrap`. MCP tokens are bound to one workspace, capped at editor/viewer, rate limited, and cannot use cookies or the REST API |
+| Agent writes bad code or secrets | Approval gate (default *ask*) with a diff; stale proposals are rejected; sensitive filenames refused; secret patterns produce warnings; event policy `none` blocks all agents; admin kill switch |
+| Prompt/agent data leakage | The Local Bridge never captures prompts or conversations. Only file changes are synced, and only for the folder the user chose after an explicit consent prompt |
+| Secrets uploaded from a laptop | Bridge skips `.env*`, keys, `node_modules`, `.git`, binaries, anything ignored by `.gitignore`/`.hackconnectignore`, files over 1 MB, and files matching secret patterns (unless explicitly allowed). The server independently refuses sensitive filenames over REST |
+| Hostile teammate plants `../` paths | The Bridge refuses remote paths that are absolute, contain `..`, or pass through symlinks (test: `Local Bridge...` in `test/platform.test.mjs`) |
+| Untrusted code execution | **No participant code runs on the host by default.** The optional runner uses `docker run` with `--network none --read-only --cap-drop ALL --security-opt no-new-privileges --pids-limit --memory --cpus --user 1000`, a throwaway copy of the files, no Docker socket and a timeout (argv unit-tested; gVisor via `runsc` supported). *Not verified on a live Docker host* |
+| User-supplied AI endpoint (SSRF) | The server resolves the host and refuses link-local/cloud-metadata addresses always, and private/loopback addresses unless `HACKCONNECT_ALLOW_PRIVATE_AI` allows it (local use only). IPv4-mapped IPv6 forms are normalised. Requests have a 120 s timeout, a per-user rate limit (20/min) and never follow credentials in URLs. *Gap:* DNS answers are not pinned between check and connect |
+| Stored AI keys | AES-256-GCM with the master key, write-only in the API, never in logs or exports; deleting settings removes them |
+| Imported or README content | Imports are screened (path traversal, `.env`/key files, binaries, size, secret patterns warned) and attributed to the importer. README Markdown is rendered with `marked` then sanitised with DOMPurify (no scripts, forms, iframes, styles or javascript: links; only https images) |
+| XSS | All dynamic UI strings are escaped; strict CSP (`script-src 'self'`: **no inline or eval scripts**, `frame-ancestors 'none'`, `object-src 'none'`; asserted by a test); links from users are `https?` only and `rel=noopener`. Inline *styles* are still allowed (`style-src 'unsafe-inline'`) |
+| CSV/spreadsheet injection in exports | Cells starting with `= + - @` are prefixed with `'` |
+| Tunnel abuse | Tunnels require the user to run `cloudflared` themselves (outbound only). Teammates never receive the raw URL: they open `/t/<id>/<signed token>/`, a read-only (GET/HEAD) proxy. Links are HMAC-signed, expire after 1 hour, and access (visibility private/team/judges/public, membership, suspension, kill switch) is re-checked on every request. Proxied responses are sandboxed (`Content-Security-Policy: sandbox`, so the page gets an opaque origin with no access to HackConnect), upstream cookies and CSP are dropped, our cookies and auth headers are never forwarded, and `Referrer-Policy: no-referrer` stops the link leaking. *Limits:* the creator still holds the raw Cloudflare URL (use free Cloudflare Access if it must be locked too); apps that use absolute paths (`/api/...`) or WebSockets/HMR do not work through the proxy |
+| SSRF from agents | Agents have no network tool. The only server-side outbound calls go to the configured AI endpoint and `api.github.com` |
+| Abuse / runaway usage | Plan quotas (workspaces, tokens), write and run rate limits, admin suspension (sessions revoked immediately), kill switch for agents/runs/tunnels, abuse reports |
+| Privacy | Account export (`GET /api/me/export`) and deletion (`DELETE /api/me`, password re-check; sole-owned workspaces removed, shared ones handed over, messages anonymised) |
+
+## Gaps (explicit)
+2FA, device/session list, per-user encrypted API-key storage with envelope encryption, a fully isolated preview *origin* (the proxy sandboxes responses instead), Redis-backed rate limits, Trivy/SAST gates beyond the CI workflow provided, recording consent flows, retention settings. All are listed in `docs/KNOWN_ISSUES.md`.
+
+## Reporting
+Open a private security advisory on the repository, or email the maintainer listed in `HANDOVER.md`.

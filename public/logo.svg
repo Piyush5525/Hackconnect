@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" role="img" aria-label="HackConnect">
+  <defs>
+    <linearGradient id="hc-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d4f99d"/><stop offset="1" stop-color="#7fbd45"/></linearGradient>
+    <linearGradient id="hc-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".35"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#hc-g)"/><rect width="64" height="32" rx="16" fill="url(#hc-s)"/>
+  <rect x="15" y="14" width="9" height="36" rx="4.5" fill="#10170d"/><rect x="40" y="14" width="9" height="36" rx="4.5" fill="#10170d"/><rect x="22" y="29" width="20" height="6" fill="#10170d"/>
+  <circle cx="32" cy="32" r="7.5" fill="#d4f99d" stroke="#10170d" stroke-width="3.5"/><circle cx="32" cy="32" r="2.2" fill="#10170d"/>
+  <text x="80" y="42" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="30" font-weight="750" letter-spacing="-1" fill="#edf3ee">hack<tspan fill="#b9f07c">connect</tspan></text>
+</svg>

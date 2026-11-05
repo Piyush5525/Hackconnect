@@ -1,0 +1,17 @@
+services:
+  hackconnect:
+    build: .
+    ports:
+      - "4173:4173"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: 4173
+      HACKCONNECT_AGENT_PROVIDER: ${HACKCONNECT_AGENT_PROVIDER:-demo}
+    volumes:
+      - hackconnect-data:/app/.hackconnect
+    restart: unless-stopped
+
+volumes:
+  hackconnect-data:

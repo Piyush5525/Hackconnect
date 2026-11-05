@@ -1,0 +1,10 @@
+node_modules
+.git
+.github
+.opencode
+.hackconnect
+.env
+*.log
+test
+e2e
+docs

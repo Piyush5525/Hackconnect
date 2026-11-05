@@ -4,24 +4,45 @@ Everything below uses free/open-source software. The only cost is the machine; a
 
 > **Read first:** `docs/KNOWN_ISSUES.md`. The app stores state in a single JSON file, so run **one instance only**. It is suitable for a hackathon-sized deployment, not for multi-tenant public SaaS.
 
-## Fastest path: Render (one service, no server to manage)
+## Frontend on Vercel + backend on Render
 
-HackConnect is **one app**: it serves its own frontend, the API and the WebSockets from the same address, signs users in with a cookie and keeps its data in one file. So deploy it as a **single Render web service with a persistent disk**. Do **not** split the frontend onto Vercel: Vercel cannot proxy WebSockets (live editor, chat, calls) and the login cookie would not cross sites.
+```
+browser ── https://your-app.vercel.app ──► Vercel: static frontend
+              │  /api, /download, /t, /mcp, /health are rewritten (proxied) to Render, so the login cookie stays on the Vercel address
+              └─ live sockets (room sync, calls, shared editor) go straight to Render with a one-time ticket
+```
 
+Vercel cannot carry WebSockets, and browsers refuse cross-site cookies, so the app is wired this way: ordinary requests go through Vercel's rewrites (same address, normal cookies), and only the live sockets connect to Render directly, authenticated by a 60-second single-use ticket (`POST /api/ws-ticket`). The UI and routes are unchanged.
+
+### A. Backend on Render
 1. Push the repo to GitHub.
-2. Render dashboard: **New > Blueprint**, pick the repo. It reads `render.yaml`: Docker build, 1 instance, a 1 GB disk at `/app/.hackconnect`, health check `/health`, secure cookies. The disk needs a paid plan (`starter`); the free plan has no disk and would lose all data on every restart.
-3. Fill the prompts. Everything is optional except you will set the URL in step 4. `HACKCONNECT_MASTER_KEY` is generated for you; **never change it later**.
-4. When the first deploy finishes, copy the service address (for example `https://hackconnect.onrender.com`) into `HACKCONNECT_BASE_URL` (Environment tab) and redeploy. It is used for sign-in callbacks, emailed links and the assistant launcher download.
-5. Open the site and **sign up first with your own account: the first account becomes platform admin**.
-6. Optional: add a custom domain in Render (it handles HTTPS), then update `HACKCONNECT_BASE_URL` and any OAuth callback URLs to match.
-7. Check it: `HACKCONNECT_URL=https://<your-address> node scripts/smoke.mjs` and open `/ready`.
+2. Render: **New > Blueprint**, pick the repo (it reads `render.yaml`: Docker, 1 instance, 1 GB disk at `/app/.hackconnect`, health check `/health`). The disk needs a paid plan (`starter`).
+3. When the first deploy is live, note its address, e.g. `https://hackconnect.onrender.com`. Check `<address>/health`.
 
-Things to know on Render:
-- **One instance only.** Keep `numInstances: 1`; scaling out would give two copies of the state file.
-- **Deploys restart the app** (a few seconds of downtime, WebSockets reconnect). Because it has a disk, Render cannot do zero-downtime swaps.
-- **Backups:** the app writes a backup into the disk every 15 minutes (newest 48 kept) and recovers from it automatically. Also enable Render's disk snapshots and, before an important event, download a copy of `/app/.hackconnect/state.json` from the Render shell.
-- **Assistant:** keep `HACKCONNECT_AGENT_PROVIDER=demo` on the server. Users connect their own Claude/Codex with the "Connect your AI" button (the launcher runs on their own computer), or add their own API key in the assistant's model menu.
-- **Logs:** `HACKCONNECT_LOG=json` makes them easy to search in Render's log viewer.
+### B. Frontend on Vercel
+1. In `vercel.json` replace **every** `https://YOUR-SERVICE.onrender.com` with the Render address (the build refuses to run until you do). Commit and push.
+2. Vercel: **Add New > Project**, import the same repo. Leave the preset as **Other**; `vercel.json` already sets the build command (`node scripts/build-frontend.mjs`) and output folder (`dist`). Deploy. You get e.g. `https://hackconnect.vercel.app`.
+
+### C. Connect them (Render, Environment tab, then redeploy)
+| Variable | Value |
+|---|---|
+| `HACKCONNECT_BASE_URL` | your **Vercel** address, e.g. `https://hackconnect.vercel.app` (emailed links, sign-in callbacks, and the only site allowed to open live sockets) |
+| `HACKCONNECT_API_URL` | your **Render** address (used by the CLI bridge / VS Code extension downloads) |
+
+Optional second site (a custom domain, preview URL): `HACKCONNECT_ALLOWED_ORIGINS=https://a.example.com,https://b.example.com`.
+If you set up GitHub/Google sign-in, their callback URL is `<Vercel address>/api/auth/oauth/<provider>/callback`.
+
+### D. First run
+Open the **Vercel** address and **sign up first with your own account: the first account becomes platform admin**. Check it: `HACKCONNECT_URL=https://<vercel-address> node scripts/smoke.mjs`.
+
+Things to know:
+- **Always use the Vercel address.** Opening the Render address directly still works (it serves its own copy of the UI), but it is a different login.
+- **One backend instance only** (`numInstances: 1`): the state file belongs to one instance. Deploys restart it for a few seconds; sockets reconnect.
+- **Free Render plan sleeps and has no disk**: data would be lost. Use `starter`.
+- **Backups:** the app writes a backup into the disk every 15 minutes (newest 48 kept) and self-recovers. Also enable Render's disk snapshots.
+- **Assistant:** keep `HACKCONNECT_AGENT_PROVIDER=demo` on the server. Users connect their own Claude/Codex with "Connect your AI" (runs on their computer) or add their own API key in the model menu.
+- **Run it all on one address instead** (no Vercel): deploy only Render and skip `vercel.json`; the backend serves the UI itself and nothing else changes.
+- Local check of the Vercel setup: `npm run e2e:split`.
 
 The rest of this guide covers the self-hosted VPS option.
 

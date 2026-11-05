@@ -1,0 +1,6 @@
+node_modules/
+.hackconnect/
+.env
+*.log
+vendor/
+dist/
