@@ -3,6 +3,11 @@
 </p>
 
 <p align="center">
+  <a href="https://hackconnect-azure.vercel.app"><img alt="Live demo" src="https://img.shields.io/badge/Live%20demo-hackconnect--azure.vercel.app-58e0aa?style=for-the-badge"></a>
+</p>
+
+<p align="center">
+  <img alt="Team chat on Nexconn" src="https://img.shields.io/badge/Team%20chat-Nexconn%20Chat%20SDK-7db7e8">
   <img alt="Node 22" src="https://img.shields.io/badge/Node-22+-3c873a?logo=nodedotjs&logoColor=white">
   <img alt="Yjs CRDT" src="https://img.shields.io/badge/Live%20editing-Yjs%20CRDT-58e0aa">
   <img alt="Monaco" src="https://img.shields.io/badge/Editor-Monaco-0078d4?logo=visualstudiocode&logoColor=white">
@@ -15,10 +20,16 @@
 <p align="center"><b>Google Docs + VS Code Live Share + Discord + Devpost, for hackathons.</b><br>
 Teams edit the same files live, talk in voice and video, bring their own AI with an approval gate, and organizers run the whole event: registration, team workspaces, a live dashboard, a deadline freeze and judging with a replayable build history.</p>
 
+<p align="center">
+  <b>Try it: <a href="https://hackconnect-azure.vercel.app">hackconnect-azure.vercel.app</a></b> · backend health: <a href="https://hackconnect-production.up.railway.app/health">hackconnect-production.up.railway.app/health</a>
+</p>
+
+> **Built for the Nexconn Build Challenge 2026**, track *Workplace & Collaboration* (direct messaging for teams, project discussion threads, shift handover channel). The team hub runs on the [Nexconn Chat SDK](https://docs.nexconn.ai/chatsdk-web): see [Team hub on Nexconn](#team-hub-on-nexconn).
+
 ---
 
 ## Contents
-[Screenshots](#screenshots) · [What you can do](#what-you-can-do) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Deploy](#deploy-frontend-on-vercel-backend-on-render) · [Configuration](#configuration) · [Develop and test](#develop-and-test) · [Docs](#documentation) · [Project layout](#project-layout)
+[Screenshots](#screenshots) · [What you can do](#what-you-can-do) · [Team hub on Nexconn](#team-hub-on-nexconn) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Deploy](#deploy-frontend-on-vercel-backend-on-railway) · [Configuration](#configuration) · [Develop and test](#develop-and-test) · [Docs](#documentation) · [Project layout](#project-layout)
 
 ---
 
@@ -29,7 +40,16 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
   <br><sub><b>Live workspace</b>: explorer, Monaco editor with live teammate cursors, team chat and assistant on the right.</sub>
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/hub.png" alt="Team hub: project channels, a discussion thread, the shared assistant answering in the channel, and the latest handover" width="100%">
+  <br><sub><b>Team hub</b>: project channels and threads on the left, the shared assistant answering in <code>#general</code>, the latest handover and the team on the right.</sub>
+</p>
+
 <table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/hub-handover.png" alt="A shift handover card picked up by a teammate"><br><sub><b>Shift handover</b>: done / next / blocked, addressed to a teammate, picked up in one click.</sub></td>
+    <td width="50%"><img src="docs/screenshots/hub-dm.png" alt="A direct message marked Seen"><br><sub><b>Direct messages</b>: private, with a typing indicator and "Seen".</sub></td>
+  </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/overview.png" alt="Overview"><br><sub><b>Overview</b>: your projects with language bars and contributors, plus the hackathons you take part in.</sub></td>
     <td width="50%"><img src="docs/screenshots/projects.png" alt="My projects"><br><sub><b>My projects</b>: search, sort, open a project page or the live workspace.</sub></td>
@@ -58,7 +78,6 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
     <td width="33%"><img src="docs/screenshots/workspace-menu.png" alt="Workspace menu"><br><sub>Share (view or edit link) and the ⋯ menu</sub></td>
   </tr>
   <tr>
-    <td width="33%"><img src="docs/screenshots/workspace-chat.png" alt="Workspace chat"><br><sub>Project chat with reactions</sub></td>
     <td width="33%"><img src="docs/screenshots/activity.png" alt="Activity"><br><sub>Activity timeline</sub></td>
     <td width="33%"><img src="docs/screenshots/mobile.png" alt="Phone layout" width="180"><br><sub>Works on a phone</sub></td>
   </tr>
@@ -90,6 +109,47 @@ Honest limits (single instance, JSON file storage, no PTY terminal): [docs/KNOWN
 
 ---
 
+## Team hub on Nexconn
+
+A hackathon team works in shifts across 36 hours: someone is always asleep. The team hub keeps the conversation in one place so nobody has to be woken up to find out where things stand.
+
+| Challenge requirement | In HackConnect | Nexconn feature used |
+|---|---|---|
+| **Direct messaging for teams** | Private messages between teammates, with a typing indicator, unread badges and "Seen". | Direct channels, typing status, read receipts, unread counts |
+| **Project discussion threads** | Every project has `#general`; anyone can start a named thread for one topic (for example `api-design`) so decisions are easy to find. Reactions and quoted replies. | Group channels, message history, message metadata |
+| **Shift handover channel** | Every project has `#handover`. A short form posts a **Done / Next / Blocked** card addressed to a teammate or the whole team; "I've got it" marks it picked up. The latest handover is pinned beside every channel. | Custom message type `HC:Handover`, message metadata |
+| *Extra:* **shared assistant** | Type `@ai` in a channel: the question and the answer are both in the channel, so the whole team works from the same prompt. | Server-sent group message from a bot user |
+
+```mermaid
+sequenceDiagram
+  participant A as Maya (browser)
+  participant S as HackConnect backend
+  participant N as Nexconn
+  participant B as Arjun (browser)
+  A->>S: GET /api/nexconn/session (signed in)
+  S->>N: issue access token (signed with the App Secret)
+  S-->>A: App Key + Maya's own token
+  A->>N: connect with the Chat SDK
+  A->>S: GET /api/hub
+  S->>N: create the project's channels, add or remove members
+  S-->>A: channels, threads and teammates
+  A->>N: send message / handover / reaction
+  N-->>B: delivered live
+  A->>S: POST /channels/:id/ask (an "@ai" question)
+  S->>N: post the answer as the assistant
+  N-->>A: answer appears for everyone
+  N-->>B: answer appears for everyone
+```
+
+- The **App Secret never reaches the browser**. The backend signs every Platform API call and hands each signed-in person only their own token.
+- **Channel membership follows project membership**: invite someone to a project and they are in its channels; remove them and they are out.
+- Without `NEXCONN_KEY` / `NEXCONN_SECRET` the rest of the app works as before and the hub says it is not switched on.
+- Code: [`lib/nexconn.mjs`](lib/nexconn.mjs) (server), [`hub-ui.js`](hub-ui.js) (interface), [`e2e/hub.e2e.mjs`](e2e/hub.e2e.mjs) (two real browsers against the real service).
+
+Not included: voice and video still use the built-in WebRTC calls, not the Nexconn Call SDK.
+
+---
+
 ## How it works
 
 ### Architecture (frontend on Vercel, backend on Railway)
@@ -101,6 +161,8 @@ flowchart LR
   R --> D[(Persistent disk<br/>state.json + backups)]
   R -.->|optional| M[SMTP email]
   R -.->|optional| O[GitHub / Google sign-in]
+  R -->|"tokens, channels, members"| N[Nexconn<br/>team chat]
+  U ==>|"Chat SDK"| N
   L[Local assistant launcher<br/>Claude Code / Codex] -.->|"runs on your computer"| U
   B[Local Bridge CLI] -->|Bearer token| R
   X[External agents<br/>Claude Code, Cursor] -->|MCP /mcp| R
@@ -198,7 +260,10 @@ The first account you create becomes the platform admin. Docker: `docker compose
 1. **Railway** (backend): *New Project → Deploy from GitHub repo*. It builds the [`Dockerfile`](Dockerfile) and reads [`railway.json`](railway.json) (one replica, health check `/health`). Then add a **Volume** mounted at `/app/.hackconnect` (the data lives there) and under *Settings → Networking* click **Generate Domain**.
 2. **Vercel** (frontend): put your Railway address into every rewrite in [`vercel.json`](vercel.json), push, then *Add New → Project* and import the repo (preset **Other**; the build command and output folder are already set).
 3. **Connect them** (Railway → Variables): `HACKCONNECT_BASE_URL` = your Vercel address, `HACKCONNECT_API_URL` = your Railway address, plus the other variables in [docs/DEPLOY.md](docs/DEPLOY.md). Redeploy.
-4. Open the **Vercel** address and sign up first: that account is the admin.
+4. **Team hub**: add `NEXCONN_KEY` and `NEXCONN_SECRET` (from the Nexconn console) to the Railway variables.
+5. Open the **Vercel** address and sign up first: that account is the admin.
+
+This repository's own deployment: frontend [hackconnect-azure.vercel.app](https://hackconnect-azure.vercel.app), backend `hackconnect-production.up.railway.app`.
 
 Render also works (see [`render.yaml`](render.yaml)). Full walkthrough, backups and troubleshooting: [docs/DEPLOY.md](docs/DEPLOY.md). Check a deployment locally with `npm run e2e:split`.
 
@@ -238,12 +303,13 @@ node scripts/readme-shots.mjs   # regenerate the screenshots above
 ## Project layout
 ```
 index.html, app.js, *-ui.js     the interface (vanilla JS, no build step)
+hub-ui.js                       team hub: channels, threads, handover, direct messages (Nexconn Chat SDK)
 config.js, net.js               where the backend lives + how live sockets connect
-src/                            editor client source (Yjs + Monaco), bundled into vendor/
-lib/                            backend: app, auth, collab, events, judging, tracker, social, agent...
+src/                            editor + Nexconn client source, bundled into vendor/
+lib/                            backend: app, auth, collab, events, judging, tracker, social, agent, nexconn...
 bridge/                         Local Bridge CLI and the assistant launcher
 scripts/                        build-frontend (Vercel), build-client, backup, smoke, readme-shots...
-render.yaml, vercel.json        deployment blueprints
+railway.json, vercel.json       deployment config (render.yaml as an alternative)
 test/, e2e/                     unit and real-browser tests
 ```
 
