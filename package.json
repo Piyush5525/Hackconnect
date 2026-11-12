@@ -25,7 +25,8 @@
     "e2e:call-invite": "node e2e/call-invite.e2e.mjs",
     "e2e:call-volume": "node e2e/call-volume.e2e.mjs",
     "e2e:split": "node e2e/split.e2e.mjs",
-    "build:frontend": "node scripts/build-frontend.mjs"
+    "build:frontend": "node scripts/build-frontend.mjs",
+    "e2e:hub": "node e2e/hub.e2e.mjs"
   },
   "dependencies": {
     "dompurify": "^3.4.17",
@@ -36,7 +37,9 @@
     "ws": "^8.18.0",
     "y-monaco": "^0.1.6",
     "y-protocols": "^1.0.7",
-    "yjs": "^13.6.33"
+    "yjs": "^13.6.33",
+    "@nexconn/engine": "26.2.1",
+    "@nexconn/chat": "26.2.1"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

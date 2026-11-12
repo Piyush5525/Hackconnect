@@ -76,6 +76,7 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
 | **Projects like on GitHub** | Import files, a folder, a zip or a GitHub repository. See the rendered README, a language chart, contributors with avatars, and browse every file. |
 | **Live workspace** | Monaco editor on a Yjs CRDT: live remote cursors, presence, follow mode, offline edits merge on reconnect, viewers are read-only. Explorer, tabs, status bar, resizable panels, command palette. |
 | **Teams and access** | Unique `@usernames`, connection requests, invite by username or by a **view / edit link**, change a teammate's role or remove them any time, audit log, quotas. |
+| **Team hub (Nexconn)** | Every project gets a **#general** channel, a **#handover** channel and as many **discussion threads** as it needs, plus **direct messages** between teammates. Reactions, quoted replies, unread badges, typing and "Seen" in DMs. Leave a structured **shift handover** (done / next / blocked) before you sleep and a teammate picks it up in one click. Type `@ai` and the **shared assistant** answers in the channel, so the whole team sees the same prompt and the same answer. Runs on the [Nexconn](https://nexconn.ai) Chat SDK. |
 | **Voice and video** | Several voice channels per project. Voice-only joins stay quiet in a side dock; video can pop out into a floating window or go full screen. Screen share, pin, per-person volume, and **"come join the call" invites** that land in the inbox with a Join button. |
 | **AI assistant (bring your own)** | Sign in with **Claude Code or Codex** through a tiny local launcher (your own subscription, no API key), or use Ollama, Groq, Gemini, OpenRouter, OpenAI or Claude with a key stored encrypted. Every change shows a diff and **waits for your approval** (or auto-applies if you choose). |
 | **Inbox and reminders** | One dropdown for requests, call invites and updates. Hackathon deadlines notify you at staged intervals before they close. |
@@ -212,6 +213,8 @@ Copy `.env.example` to `.env`. The important ones:
 | `SMTP_*` | Real confirmation and password-reset emails. |
 | `GITHUB_CLIENT_ID/SECRET`, `GOOGLE_CLIENT_ID/SECRET` | "Continue with GitHub / Google". |
 | `HACKCONNECT_TRUST_PROXY` | `true` behind Vercel / Railway so rate limits use the visitor's address. |
+| `NEXCONN_KEY`, `NEXCONN_SECRET` | Switch on the team hub (channels, threads, handover, direct messages). The secret stays on the server; each person gets their own token. |
+| `HACKCONNECT_AGENT_PROVIDER` | Server-wide assistant: `demo`, `groq`, `gemini`, `openrouter`, `openai`, `anthropic` or `compatible`. `groq` / `gemini` / `openrouter` read `GROQ_API`, `GEMINI_API`, `OPENROUTER_API`. |
 
 Every variable: [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md). Run `npm run check:secrets` before every commit.
 
@@ -224,7 +227,8 @@ npm run e2e:call-invite  # call invites reach the inbox and one click joins the 
 npm run e2e:call-volume  # per-person volume + screen share keeps the grid
 npm run e2e:signin       # connect Claude / Codex, edit modes, past chats
 npm run e2e:split        # the Vercel + Railway setup: proxy + ticketed sockets
-npm run build:client     # rebuild vendor/ (Yjs + Monaco) after editing src/
+npm run e2e:hub          # team hub against the real Nexconn service (skipped without NEXCONN_KEY / NEXCONN_SECRET)
+npm run build:client     # rebuild vendor/ (Yjs + Monaco + Nexconn Chat SDK) after editing src/
 node scripts/readme-shots.mjs   # regenerate the screenshots above
 ```
 

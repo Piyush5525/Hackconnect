@@ -17,7 +17,7 @@ COPY bridge ./bridge
 COPY public ./public
 COPY --from=build /app/vendor ./vendor
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-COPY server.mjs index.html app.js events-ui.js shell.js app.css projects-ui.js tracker-ui.js motion.js settings-ui.js call-ui.js logos.js workspace-ui.js chat-ui.js config.js net.js ./
+COPY server.mjs index.html app.js events-ui.js shell.js app.css projects-ui.js tracker-ui.js motion.js settings-ui.js call-ui.js logos.js workspace-ui.js chat-ui.js hub-ui.js config.js net.js ./
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && mkdir -p /app/.hackconnect && chown -R node:node /app
 # The entrypoint starts as root only to fix ownership of a mounted data disk, then runs the app as the unprivileged "node" user.
 EXPOSE 4173
