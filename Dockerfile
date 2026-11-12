@@ -21,7 +21,7 @@ COPY server.mjs index.html app.js events-ui.js shell.js app.css projects-ui.js t
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && mkdir -p /app/.hackconnect && chown -R node:node /app
 # The entrypoint starts as root only to fix ownership of a mounted data disk, then runs the app as the unprivileged "node" user.
 EXPOSE 4173
-VOLUME ["/app/.hackconnect"]
+# No VOLUME instruction: Railway rejects it. Mount a volume at /app/.hackconnect on the platform (Railway Volume / Render disk / compose volume).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||4173)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server.mjs"]

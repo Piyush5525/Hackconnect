@@ -8,7 +8,7 @@
   <img alt="Monaco" src="https://img.shields.io/badge/Editor-Monaco-0078d4?logo=visualstudiocode&logoColor=white">
   <img alt="WebRTC" src="https://img.shields.io/badge/Calls-WebRTC-ff6b6b?logo=webrtc&logoColor=white">
   <img alt="Frontend on Vercel" src="https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white">
-  <img alt="Backend on Render" src="https://img.shields.io/badge/Backend-Render-46e3b7?logo=render&logoColor=black">
+  <img alt="Backend on Railway" src="https://img.shields.io/badge/Backend-Railway-46e3b7?logo=railway&logoColor=black">
   <img alt="No database needed" src="https://img.shields.io/badge/Storage-one%20JSON%20file-b9f07c">
 </p>
 
@@ -91,11 +91,11 @@ Honest limits (single instance, JSON file storage, no PTY terminal): [docs/KNOWN
 
 ## How it works
 
-### Architecture (frontend on Vercel, backend on Render)
+### Architecture (frontend on Vercel, backend on Railway)
 ```mermaid
 flowchart LR
   U([Browser]) -->|static files| V[Vercel<br/>frontend]
-  V -->|"/api, /download, /t, /mcp<br/>rewritten (same address, normal cookies)"| R[Render<br/>Node backend]
+  V -->|"/api, /download, /t, /mcp<br/>rewritten (same address, normal cookies)"| R[Railway<br/>Node backend]
   U ==>|"live sockets /ws /collab<br/>one-time ticket"| R
   R --> D[(Persistent disk<br/>state.json + backups)]
   R -.->|optional| M[SMTP email]
@@ -104,7 +104,7 @@ flowchart LR
   B[Local Bridge CLI] -->|Bearer token| R
   X[External agents<br/>Claude Code, Cursor] -->|MCP /mcp| R
 ```
-Vercel cannot carry WebSockets and browsers refuse cross-site cookies, so ordinary requests go through Vercel's rewrites (same address, normal login cookie) and only the live sockets connect straight to Render, signed in by a **60-second single-use ticket** (`POST /api/ws-ticket`). Prefer one address? Deploy only the backend: it serves the UI itself.
+Vercel cannot carry WebSockets and browsers refuse cross-site cookies, so ordinary requests go through Vercel's rewrites (same address, normal login cookie) and only the live sockets connect straight to Railway, signed in by a **60-second single-use ticket** (`POST /api/ws-ticket`). Prefer one address? Deploy only the backend: it serves the UI itself.
 
 ### From sign-up to shipping
 ```mermaid
@@ -193,13 +193,13 @@ npm start            # open http://localhost:4173 and create an account
 ```
 The first account you create becomes the platform admin. Docker: `docker compose up --build`.
 
-## Deploy: frontend on Vercel, backend on Render
-1. **Render** (backend): *New → Blueprint*, pick this repo. It reads [`render.yaml`](render.yaml): Docker, one instance, a 1 GB disk at `/app/.hackconnect`, health check `/health`.
-2. **Vercel** (frontend): put your Render address into every rewrite in [`vercel.json`](vercel.json), push, then *Add New → Project* and import the repo (preset **Other**; the build command and output folder are already set).
-3. **Connect them** (Render → Environment): `HACKCONNECT_BASE_URL` = your Vercel address, `HACKCONNECT_API_URL` = your Render address. Redeploy.
+## Deploy: frontend on Vercel, backend on Railway
+1. **Railway** (backend): *New Project → Deploy from GitHub repo*. It builds the [`Dockerfile`](Dockerfile) and reads [`railway.json`](railway.json) (one replica, health check `/health`). Then add a **Volume** mounted at `/app/.hackconnect` (the data lives there) and under *Settings → Networking* click **Generate Domain**.
+2. **Vercel** (frontend): put your Railway address into every rewrite in [`vercel.json`](vercel.json), push, then *Add New → Project* and import the repo (preset **Other**; the build command and output folder are already set).
+3. **Connect them** (Railway → Variables): `HACKCONNECT_BASE_URL` = your Vercel address, `HACKCONNECT_API_URL` = your Railway address, plus the other variables in [docs/DEPLOY.md](docs/DEPLOY.md). Redeploy.
 4. Open the **Vercel** address and sign up first: that account is the admin.
 
-Full walkthrough, backups and troubleshooting: [docs/DEPLOY.md](docs/DEPLOY.md). Check a deployment locally with `npm run e2e:split`.
+Render also works (see [`render.yaml`](render.yaml)). Full walkthrough, backups and troubleshooting: [docs/DEPLOY.md](docs/DEPLOY.md). Check a deployment locally with `npm run e2e:split`.
 
 ## Configuration
 Copy `.env.example` to `.env`. The important ones:
@@ -211,7 +211,7 @@ Copy `.env.example` to `.env`. The important ones:
 | `HACKCONNECT_MASTER_KEY` | Encrypts stored GitHub tokens. Generate once, never change. |
 | `SMTP_*` | Real confirmation and password-reset emails. |
 | `GITHUB_CLIENT_ID/SECRET`, `GOOGLE_CLIENT_ID/SECRET` | "Continue with GitHub / Google". |
-| `HACKCONNECT_TRUST_PROXY` | `true` behind Vercel / Render so rate limits use the visitor's address. |
+| `HACKCONNECT_TRUST_PROXY` | `true` behind Vercel / Railway so rate limits use the visitor's address. |
 
 Every variable: [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md). Run `npm run check:secrets` before every commit.
 
@@ -223,7 +223,7 @@ npm run e2e:projects     # projects, people, inbox, member management
 npm run e2e:call-invite  # call invites reach the inbox and one click joins the call
 npm run e2e:call-volume  # per-person volume + screen share keeps the grid
 npm run e2e:signin       # connect Claude / Codex, edit modes, past chats
-npm run e2e:split        # the Vercel + Render setup: proxy + ticketed sockets
+npm run e2e:split        # the Vercel + Railway setup: proxy + ticketed sockets
 npm run build:client     # rebuild vendor/ (Yjs + Monaco) after editing src/
 node scripts/readme-shots.mjs   # regenerate the screenshots above
 ```

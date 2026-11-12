@@ -1,4 +1,4 @@
-// Builds the static frontend for Vercel into ./dist, pointing it at the backend (Render) named in vercel.json.
+// Builds the static frontend for Vercel into ./dist, pointing it at the backend (Railway/Render) named in vercel.json.
 // Single source of truth: the destination of the "/api/:path*" rewrite in vercel.json. Run: node scripts/build-frontend.mjs [--allow-placeholder]
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, cpSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -10,7 +10,7 @@ const config = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8'));
 const api = (config.rewrites || []).find((r) => r.source === '/api/:path*'); if (!api) throw new Error('vercel.json needs an "/api/:path*" rewrite pointing at your backend');
 const override = process.argv.find((a) => a.startsWith('--backend='))?.slice(10); // used by the e2e test
 const backend = override ? new URL(override).origin : new URL(api.destination.replace(/\/api\/:path\*$/, '')).origin;
-if (/YOUR-SERVICE/i.test(backend) && !process.argv.includes('--allow-placeholder')) { console.error('\nvercel.json still says YOUR-SERVICE.onrender.com. Replace it (in every rewrite) with your real Render address, e.g. https://hackconnect.onrender.com, then build again.\n'); process.exit(1); }
+if (/YOUR-SERVICE/i.test(backend) && !process.argv.includes('--allow-placeholder')) { console.error('\nvercel.json still says YOUR-SERVICE. Replace it (in every rewrite) with your real backend address, e.g. https://hackconnect-production.up.railway.app, then build again.\n'); process.exit(1); }
 if (!override) for (const r of config.rewrites) if (new URL(r.destination.replace(/:path*$/, "")).origin !== backend) throw new Error(`Rewrite ${r.source} points at ${r.destination}; every rewrite must use ${backend}`);
 
 rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
