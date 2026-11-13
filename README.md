@@ -7,7 +7,6 @@
 </p>
 
 <p align="center">
-  <img alt="Team chat on Nexconn" src="https://img.shields.io/badge/Team%20chat-Nexconn%20Chat%20SDK-7db7e8">
   <img alt="Node 22" src="https://img.shields.io/badge/Node-22+-3c873a?logo=nodedotjs&logoColor=white">
   <img alt="Yjs CRDT" src="https://img.shields.io/badge/Live%20editing-Yjs%20CRDT-58e0aa">
   <img alt="Monaco" src="https://img.shields.io/badge/Editor-Monaco-0078d4?logo=visualstudiocode&logoColor=white">
@@ -24,12 +23,10 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
   <b>Try it: <a href="https://hackconnect-azure.vercel.app">hackconnect-azure.vercel.app</a></b> · backend health: <a href="https://hackconnect-production.up.railway.app/health">hackconnect-production.up.railway.app/health</a>
 </p>
 
-> **Built for the Nexconn Build Challenge 2026**, track *Workplace & Collaboration* (direct messaging for teams, project discussion threads, shift handover channel). The team hub runs on the [Nexconn Chat SDK](https://docs.nexconn.ai/chatsdk-web): see [Team hub on Nexconn](#team-hub-on-nexconn).
-
 ---
 
 ## Contents
-[Screenshots](#screenshots) · [What you can do](#what-you-can-do) · [Team hub on Nexconn](#team-hub-on-nexconn) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Deploy](#deploy-frontend-on-vercel-backend-on-railway) · [Configuration](#configuration) · [Develop and test](#develop-and-test) · [Docs](#documentation) · [Project layout](#project-layout)
+[Screenshots](#screenshots) · [What you can do](#what-you-can-do) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Deploy](#deploy-frontend-on-vercel-backend-on-railway) · [Configuration](#configuration) · [Develop and test](#develop-and-test) · [Docs](#documentation) · [Project layout](#project-layout)
 
 ---
 
@@ -40,16 +37,7 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
   <br><sub><b>Live workspace</b>: explorer, Monaco editor with live teammate cursors, team chat and assistant on the right.</sub>
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/hub.png" alt="Team hub: project channels, a discussion thread, the shared assistant answering in the channel, and the latest handover" width="100%">
-  <br><sub><b>Team hub</b>: project channels and threads on the left, the shared assistant answering in <code>#general</code>, the latest handover and the team on the right.</sub>
-</p>
-
 <table>
-  <tr>
-    <td width="50%"><img src="docs/screenshots/hub-handover.png" alt="A shift handover card picked up by a teammate"><br><sub><b>Shift handover</b>: done / next / blocked, addressed to a teammate, picked up in one click.</sub></td>
-    <td width="50%"><img src="docs/screenshots/hub-dm.png" alt="A direct message marked Seen"><br><sub><b>Direct messages</b>: private, with a typing indicator and "Seen".</sub></td>
-  </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/overview.png" alt="Overview"><br><sub><b>Overview</b>: your projects with language bars and contributors, plus the hackathons you take part in.</sub></td>
     <td width="50%"><img src="docs/screenshots/projects.png" alt="My projects"><br><sub><b>My projects</b>: search, sort, open a project page or the live workspace.</sub></td>
@@ -95,7 +83,6 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
 | **Projects like on GitHub** | Import files, a folder, a zip or a GitHub repository. See the rendered README, a language chart, contributors with avatars, and browse every file. |
 | **Live workspace** | Monaco editor on a Yjs CRDT: live remote cursors, presence, follow mode, offline edits merge on reconnect, viewers are read-only. Explorer, tabs, status bar, resizable panels, command palette. |
 | **Teams and access** | Unique `@usernames`, connection requests, invite by username or by a **view / edit link**, change a teammate's role or remove them any time, audit log, quotas. |
-| **Team hub (Nexconn)** | Every project gets a **#general** channel, a **#handover** channel and as many **discussion threads** as it needs, plus **direct messages** between teammates. Reactions, quoted replies, unread badges, typing and "Seen" in DMs. Leave a structured **shift handover** (done / next / blocked) before you sleep and a teammate picks it up in one click. Type `@ai` and the **shared assistant** answers in the channel, so the whole team sees the same prompt and the same answer. Runs on the [Nexconn](https://nexconn.ai) Chat SDK. |
 | **Voice and video** | Several voice channels per project. Voice-only joins stay quiet in a side dock; video can pop out into a floating window or go full screen. Screen share, pin, per-person volume, and **"come join the call" invites** that land in the inbox with a Join button. |
 | **AI assistant (bring your own)** | Sign in with **Claude Code or Codex** through a tiny local launcher (your own subscription, no API key), or use Ollama, Groq, Gemini, OpenRouter, OpenAI or Claude with a key stored encrypted. Every change shows a diff and **waits for your approval** (or auto-applies if you choose). |
 | **Inbox and reminders** | One dropdown for requests, call invites and updates. Hackathon deadlines notify you at staged intervals before they close. |
@@ -106,47 +93,6 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
 | **Ops** | `/health`, `/ready`, `/metrics`, JSON logs, automatic backups, CI, load test. |
 
 Honest limits (single instance, JSON file storage, no PTY terminal): [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
-
----
-
-## Team hub on Nexconn
-
-A hackathon team works in shifts across 36 hours: someone is always asleep. The team hub keeps the conversation in one place so nobody has to be woken up to find out where things stand.
-
-| Challenge requirement | In HackConnect | Nexconn feature used |
-|---|---|---|
-| **Direct messaging for teams** | Private messages between teammates, with a typing indicator, unread badges and "Seen". | Direct channels, typing status, read receipts, unread counts |
-| **Project discussion threads** | Every project has `#general`; anyone can start a named thread for one topic (for example `api-design`) so decisions are easy to find. Reactions and quoted replies. | Group channels, message history, message metadata |
-| **Shift handover channel** | Every project has `#handover`. A short form posts a **Done / Next / Blocked** card addressed to a teammate or the whole team; "I've got it" marks it picked up. The latest handover is pinned beside every channel. | Custom message type `HC:Handover`, message metadata |
-| *Extra:* **shared assistant** | Type `@ai` in a channel: the question and the answer are both in the channel, so the whole team works from the same prompt. | Server-sent group message from a bot user |
-
-```mermaid
-sequenceDiagram
-  participant A as Maya (browser)
-  participant S as HackConnect backend
-  participant N as Nexconn
-  participant B as Arjun (browser)
-  A->>S: GET /api/nexconn/session (signed in)
-  S->>N: issue access token (signed with the App Secret)
-  S-->>A: App Key + Maya's own token
-  A->>N: connect with the Chat SDK
-  A->>S: GET /api/hub
-  S->>N: create the project's channels, add or remove members
-  S-->>A: channels, threads and teammates
-  A->>N: send message / handover / reaction
-  N-->>B: delivered live
-  A->>S: POST /channels/:id/ask (an "@ai" question)
-  S->>N: post the answer as the assistant
-  N-->>A: answer appears for everyone
-  N-->>B: answer appears for everyone
-```
-
-- The **App Secret never reaches the browser**. The backend signs every Platform API call and hands each signed-in person only their own token.
-- **Channel membership follows project membership**: invite someone to a project and they are in its channels; remove them and they are out.
-- Without `NEXCONN_KEY` / `NEXCONN_SECRET` the rest of the app works as before and the hub says it is not switched on.
-- Code: [`lib/nexconn.mjs`](lib/nexconn.mjs) (server), [`hub-ui.js`](hub-ui.js) (interface), [`e2e/hub.e2e.mjs`](e2e/hub.e2e.mjs) (two real browsers against the real service).
-
-Not included: voice and video still use the built-in WebRTC calls, not the Nexconn Call SDK.
 
 ---
 
@@ -161,8 +107,6 @@ flowchart LR
   R --> D[(Persistent disk<br/>state.json + backups)]
   R -.->|optional| M[SMTP email]
   R -.->|optional| O[GitHub / Google sign-in]
-  R -->|"tokens, channels, members"| N[Nexconn<br/>team chat]
-  U ==>|"Chat SDK"| N
   L[Local assistant launcher<br/>Claude Code / Codex] -.->|"runs on your computer"| U
   B[Local Bridge CLI] -->|Bearer token| R
   X[External agents<br/>Claude Code, Cursor] -->|MCP /mcp| R
@@ -260,8 +204,7 @@ The first account you create becomes the platform admin. Docker: `docker compose
 1. **Railway** (backend): *New Project → Deploy from GitHub repo*. It builds the [`Dockerfile`](Dockerfile) and reads [`railway.json`](railway.json) (one replica, health check `/health`). Then add a **Volume** mounted at `/app/.hackconnect` (the data lives there) and under *Settings → Networking* click **Generate Domain**.
 2. **Vercel** (frontend): put your Railway address into every rewrite in [`vercel.json`](vercel.json), push, then *Add New → Project* and import the repo (preset **Other**; the build command and output folder are already set).
 3. **Connect them** (Railway → Variables): `HACKCONNECT_BASE_URL` = your Vercel address, `HACKCONNECT_API_URL` = your Railway address, plus the other variables in [docs/DEPLOY.md](docs/DEPLOY.md). Redeploy.
-4. **Team hub**: add `NEXCONN_KEY` and `NEXCONN_SECRET` (from the Nexconn console) to the Railway variables.
-5. Open the **Vercel** address and sign up first: that account is the admin.
+4. Open the **Vercel** address and sign up first: that account is the admin.
 
 This repository's own deployment: frontend [hackconnect-azure.vercel.app](https://hackconnect-azure.vercel.app), backend `hackconnect-production.up.railway.app`.
 
@@ -278,7 +221,6 @@ Copy `.env.example` to `.env`. The important ones:
 | `SMTP_*` | Real confirmation and password-reset emails. |
 | `GITHUB_CLIENT_ID/SECRET`, `GOOGLE_CLIENT_ID/SECRET` | "Continue with GitHub / Google". |
 | `HACKCONNECT_TRUST_PROXY` | `true` behind Vercel / Railway so rate limits use the visitor's address. |
-| `NEXCONN_KEY`, `NEXCONN_SECRET` | Switch on the team hub (channels, threads, handover, direct messages). The secret stays on the server; each person gets their own token. |
 | `HACKCONNECT_AGENT_PROVIDER` | Server-wide assistant: `demo`, `groq`, `gemini`, `openrouter`, `openai`, `anthropic` or `compatible`. `groq` / `gemini` / `openrouter` read `GROQ_API`, `GEMINI_API`, `OPENROUTER_API`. |
 
 Every variable: [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md). Run `npm run check:secrets` before every commit.
@@ -292,8 +234,7 @@ npm run e2e:call-invite  # call invites reach the inbox and one click joins the 
 npm run e2e:call-volume  # per-person volume + screen share keeps the grid
 npm run e2e:signin       # connect Claude / Codex, edit modes, past chats
 npm run e2e:split        # the Vercel + Railway setup: proxy + ticketed sockets
-npm run e2e:hub          # team hub against the real Nexconn service (skipped without NEXCONN_KEY / NEXCONN_SECRET)
-npm run build:client     # rebuild vendor/ (Yjs + Monaco + Nexconn Chat SDK) after editing src/
+npm run build:client     # rebuild vendor/ (Yjs + Monaco) after editing src/
 node scripts/readme-shots.mjs   # regenerate the screenshots above
 ```
 
@@ -303,10 +244,9 @@ node scripts/readme-shots.mjs   # regenerate the screenshots above
 ## Project layout
 ```
 index.html, app.js, *-ui.js     the interface (vanilla JS, no build step)
-hub-ui.js                       team hub: channels, threads, handover, direct messages (Nexconn Chat SDK)
 config.js, net.js               where the backend lives + how live sockets connect
-src/                            editor + Nexconn client source, bundled into vendor/
-lib/                            backend: app, auth, collab, events, judging, tracker, social, agent, nexconn...
+src/                            editor client source (Yjs + Monaco), bundled into vendor/
+lib/                            backend: app, auth, collab, events, judging, tracker, social, agent...
 bridge/                         Local Bridge CLI and the assistant launcher
 scripts/                        build-frontend (Vercel), build-client, backup, smoke, readme-shots...
 railway.json, vercel.json       deployment config (render.yaml as an alternative)

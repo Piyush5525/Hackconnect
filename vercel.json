@@ -19,10 +19,10 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "same-origin" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; worker-src 'self' blob:; media-src 'self' blob:; connect-src 'self' ws: wss: http://127.0.0.1:47831 http://localhost:47831 https://*.sg-light-edge.com https://*.rongnav.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; worker-src 'self' blob:; media-src 'self' blob:; connect-src 'self' ws: wss: http://127.0.0.1:47831 http://localhost:47831; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" }
       ]
     },
-    { "source": "/(app.js|events-ui.js|projects-ui.js|tracker-ui.js|settings-ui.js|call-ui.js|workspace-ui.js|chat-ui.js|shell.js|motion.js|net.js|hub-ui.js|config.js|logos.js|app.css|index.html)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/(app.js|events-ui.js|projects-ui.js|tracker-ui.js|settings-ui.js|call-ui.js|workspace-ui.js|chat-ui.js|shell.js|motion.js|net.js|fx.js|config.js|logos.js|app.css|index.html)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
     { "source": "/vendor/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }] }
   ]
 }

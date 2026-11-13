@@ -28,7 +28,6 @@ Vercel cannot carry WebSockets, and browsers refuse cross-site cookies, so the a
 | `HACKCONNECT_LOG` | `json` |
 | `HACKCONNECT_AGENT_PROVIDER` | `demo` |
 | `HACKCONNECT_MASTER_KEY` | output of `openssl rand -base64 32` (set once, never change) |
-| `NEXCONN_KEY`, `NEXCONN_SECRET` | from the Nexconn console: switches on the team hub (channels, threads, handover, direct messages) |
 | `SMTP_*`, `GITHUB_*`, `GOOGLE_*` | optional, see `docs/ENVIRONMENT.md` |
 
    Do not set `PORT`: Railway injects it and the app reads it.
