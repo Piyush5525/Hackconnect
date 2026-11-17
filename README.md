@@ -254,5 +254,3 @@ test/, e2e/                     unit and real-browser tests
 ```
 
 <p align="center"><sub>Built for hackathon teams. Free and open-source tools all the way down.</sub></p>
-#   H a c k c o n n e c t - N e x c o n n  
- 
