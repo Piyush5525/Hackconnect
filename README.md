@@ -5,6 +5,8 @@
 <p align="center">
   <a href="https://nexconn.ai"><img alt="Built on Nexconn" src="https://img.shields.io/badge/Built%20on-Nexconn-2f6bff?style=for-the-badge"></a>
   <a href="https://hackconnect-azure.vercel.app"><img alt="Live demo" src="https://img.shields.io/badge/Live%20demo-hackconnect--azure.vercel.app-58e0aa?style=for-the-badge"></a>
+  <a href="HackConnect_Nexconn_Demo.mp4"><img alt="Demo video" src="https://img.shields.io/badge/Demo-video-ff4d6d?style=for-the-badge&logo=youtube&logoColor=white"></a>
+  <a href="HackConnect_Nexconn_Pitch.pptx?raw=true"><img alt="Pitch deck" src="https://img.shields.io/badge/Pitch-deck-f5a623?style=for-the-badge&logo=microsoftpowerpoint&logoColor=white"></a>
 </p>
 
 <p align="center">
@@ -30,7 +32,16 @@ Every project gets its own Nexconn channels, threads and direct messages. The ch
 ---
 
 ## Contents
-[Built on Nexconn](#built-on-nexconn) · [Screenshots](#screenshots) · [What you can do](#what-you-can-do) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Set up Nexconn](#set-up-nexconn) · [Deploy](#deploy-frontend-on-vercel-backend-on-railway) · [Configuration](#configuration) · [Develop and test](#develop-and-test) · [Docs](#documentation) · [Project layout](#project-layout)
+[Demo video and pitch deck](#demo-video-and-pitch-deck) · [Built on Nexconn](#built-on-nexconn) · [Screenshots](#screenshots) · [What you can do](#what-you-can-do) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Set up Nexconn](#set-up-nexconn) · [Deploy](#deploy-frontend-on-vercel-backend-on-railway) · [Configuration](#configuration) · [Develop and test](#develop-and-test) · [Docs](#documentation) · [Project layout](#project-layout)
+
+---
+
+## Demo video and pitch deck
+
+| | |
+|---|---|
+| 🎬 **Demo video** | [Watch the HackConnect × Nexconn demo](HackConnect_Nexconn_Demo.mp4) (MP4, ~18 MB, plays in the browser on GitHub) |
+| 📊 **Pitch deck** | [Download the pitch deck](HackConnect_Nexconn_Pitch.pptx?raw=true) (PowerPoint, ~2.6 MB) |
 
 ---
 
@@ -350,6 +361,8 @@ bridge/                         Local Bridge CLI and the assistant launcher
 scripts/                        build-frontend (Vercel), build-client, backup, smoke, readme-shots...
 railway.json, vercel.json       deployment config (render.yaml as an alternative)
 test/, e2e/                     unit and real-browser tests
+HackConnect_Nexconn_Demo.mp4    demo video
+HackConnect_Nexconn_Pitch.pptx  pitch deck
 ```
 
 <p align="center"><sub>Built for the Nexconn Hackathon. Messaging and calls by Nexconn; everything else free and open-source tools all the way down.</sub></p>
