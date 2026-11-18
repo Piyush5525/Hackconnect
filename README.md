@@ -10,7 +10,7 @@
   <img alt="Node 22" src="https://img.shields.io/badge/Node-22+-3c873a?logo=nodedotjs&logoColor=white">
   <img alt="Yjs CRDT" src="https://img.shields.io/badge/Live%20editing-Yjs%20CRDT-58e0aa">
   <img alt="Monaco" src="https://img.shields.io/badge/Editor-Monaco-0078d4?logo=visualstudiocode&logoColor=white">
-  <img alt="WebRTC" src="https://img.shields.io/badge/Calls-WebRTC-ff6b6b?logo=webrtc&logoColor=white">
+  <img alt="Chat and calls on Nexconn" src="https://img.shields.io/badge/Chat%20%2B%20Calls-Nexconn-2f6bff">
   <img alt="Frontend on Vercel" src="https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white">
   <img alt="Backend on Railway" src="https://img.shields.io/badge/Backend-Railway-46e3b7?logo=railway&logoColor=black">
   <img alt="No database needed" src="https://img.shields.io/badge/Storage-one%20JSON%20file-b9f07c">
@@ -43,12 +43,12 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
     <td width="50%"><img src="docs/screenshots/projects.png" alt="My projects"><br><sub><b>My projects</b>: search, sort, open a project page or the live workspace.</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/screenshots/call-fullscreen.png" alt="Full-screen call"><br><sub><b>Voice and video calls</b>: box-sized tiles, speaker highlight, screen share, pin, invite.</sub></td>
-    <td width="50%"><img src="docs/screenshots/inbox-call-invite.png" alt="Inbox with a join-call message"><br><sub><b>Call invites</b>: teammates get an inbox message and a live prompt with a one-click <i>Join call</i>.</sub></td>
+    <td width="50%"><img src="docs/screenshots/hub.png" alt="Team hub on Nexconn"><br><sub><b>Team hub on Nexconn</b>: project channels, threads and direct messages in the Nexconn Chat UI, with unread badges.</sub></td>
+    <td width="50%"><img src="docs/screenshots/hub-handover.png" alt="Handover card in #handover"><br><sub><b>Shift handover</b>: a done / next / blocked card in #handover so whoever picks up knows where things stand.</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/screenshots/call-volume-menu.png" alt="Per-person volume menu"><br><sub><b>Per-person volume</b>: right-click anyone for a live speaking meter, volume, mute-for-me and pin.</sub></td>
-    <td width="50%"><img src="docs/screenshots/call-invite.png" alt="Invite teammates to the call"><br><sub><b>Invite to the call</b>: pick who to ring, in one click.</sub></td>
+    <td width="50%"><img src="docs/screenshots/workspace-chat.png" alt="Workspace chat is the project #general"><br><sub><b>One conversation</b>: the Live workspace chat is the project's Nexconn #general, with <code>/ai</code> answers for everyone.</sub></td>
+    <td width="50%"><sub><b>Voice and video calls</b> run on Nexconn Call: ring a teammate from a DM, or the whole project from a channel or the workspace.</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/hackathons.png" alt="Hackathons"><br><sub><b>Hackathons</b>: host or join events with phases, teams and judging.</sub></td>
@@ -83,7 +83,8 @@ Teams edit the same files live, talk in voice and video, bring their own AI with
 | **Projects like on GitHub** | Import files, a folder, a zip or a GitHub repository. See the rendered README, a language chart, contributors with avatars, and browse every file. |
 | **Live workspace** | Monaco editor on a Yjs CRDT: live remote cursors, presence, follow mode, offline edits merge on reconnect, viewers are read-only. Explorer, tabs, status bar, resizable panels, command palette. |
 | **Teams and access** | Unique `@usernames`, connection requests, invite by username or by a **view / edit link**, change a teammate's role or remove them any time, audit log, quotas. |
-| **Voice and video** | Several voice channels per project. Voice-only joins stay quiet in a side dock; video can pop out into a floating window or go full screen. Screen share, pin, per-person volume, and **"come join the call" invites** that land in the inbox with a Join button. |
+| **Voice and video (Nexconn Call)** | 1:1 calls from a direct conversation and group calls from a project channel or the workspace's Call button, on the Nexconn Call SDK. Incoming calls ring with Accept / Decline; the call window shows everyone's video (or initials), with mute, camera, device choice, invite more and full screen. |
+| **Team hub (Nexconn)** | Built on the [Nexconn](https://nexconn.ai) Chat UI SDK. Every project gets **#general** and **#handover** channels plus as many topic **threads** as it needs, and teammates can **message each other directly**. Images, files, emoji, replies, forwarding, read state, typing and unread badges come from Nexconn. Leave a structured **handover** (done / next / blocked) before you log off, and type `/ai` in any project channel so the **shared assistant** answers for the whole team. |
 | **AI assistant (bring your own)** | Sign in with **Claude Code or Codex** through a tiny local launcher (your own subscription, no API key), or use Ollama, Groq, Gemini, OpenRouter, OpenAI or Claude with a key stored encrypted. Every change shows a diff and **waits for your approval** (or auto-applies if you choose). |
 | **Inbox and reminders** | One dropdown for requests, call invites and updates. Hackathon deadlines notify you at staged intervals before they close. |
 | **Overview** | Your recent projects with language bars and contributors, plus a row of cards for the hackathons you take part in (status, source and a live deadline countdown). The "Get started" checklist disappears once every step is done. |
@@ -105,6 +106,8 @@ flowchart LR
   V -->|"/api, /download, /t, /mcp<br/>rewritten (same address, normal cookies)"| R[Railway<br/>Node backend]
   U ==>|"live sockets /ws /collab<br/>one-time ticket"| R
   R --> D[(Persistent disk<br/>state.json + backups)]
+  U ==>|"chat, Chat UI, calls<br/>Nexconn SDKs"| N[Nexconn<br/>Singapore]
+  R -->|"tokens, channels, bot<br/>signed with App Secret"| N
   R -.->|optional| M[SMTP email]
   R -.->|optional| O[GitHub / Google sign-in]
   L[Local assistant launcher<br/>Claude Code / Codex] -.->|"runs on your computer"| U
@@ -147,19 +150,24 @@ sequenceDiagram
   S->>S: debounce and persist to state.json
 ```
 
-### "Come join the call" invites
+### Team hub and calls on Nexconn
 ```mermaid
 sequenceDiagram
-  participant H as Host (in a call)
+  participant A as Maya (browser)
   participant S as Backend
-  participant T as Teammate
-  H->>S: POST /projects/:id/call-invite {channel, userIds}
-  S->>S: write an inbox message for each person
-  S-->>T: live prompt "Maya invited you to a call" [Join] (if the project is open)
-  Note over T: otherwise the inbox bell lights up within 15 s
-  T->>S: click Join / Join call
-  S-->>T: opens the project, joins the same voice channel
-  T-->>H: appears in the call (WebRTC peer connection)
+  participant N as Nexconn
+  participant B as Arjun (browser)
+  A->>S: GET /api/nexconn/session
+  S->>N: issue an access token (signed with the App Secret)
+  S-->>A: App Key + Maya's token (never the secret)
+  A->>N: connect (Chat SDK), render Chat UI
+  S->>N: create #general and #handover, keep members = project members
+  A->>N: message in #general (or "/ai ...")
+  N-->>B: delivered in real time (Team hub and workspace chat)
+  S->>N: assistant answer posted as HackConnect AI
+  A->>N: startCall (Call SDK, group or 1:1)
+  N-->>B: incoming call rings
+  B->>N: accept, audio and video flow through Nexconn
 ```
 
 ### AI assistant with your own account
@@ -222,6 +230,7 @@ Copy `.env.example` to `.env`. The important ones:
 | `GITHUB_CLIENT_ID/SECRET`, `GOOGLE_CLIENT_ID/SECRET` | "Continue with GitHub / Google". |
 | `HACKCONNECT_TRUST_PROXY` | `true` behind Vercel / Railway so rate limits use the visitor's address. |
 | `HACKCONNECT_AGENT_PROVIDER` | Server-wide assistant: `demo`, `groq`, `gemini`, `openrouter`, `openai`, `anthropic` or `compatible`. `groq` / `gemini` / `openrouter` read `GROQ_API`, `GEMINI_API`, `OPENROUTER_API`. |
+| `NEXCONN_KEY`, `NEXCONN_SECRET` | Switch on the Team hub (channels, threads, handover, direct messages). From the Nexconn console. The secret stays on the server; each person gets their own token. |
 
 Every variable: [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md). Run `npm run check:secrets` before every commit.
 
@@ -230,11 +239,10 @@ Every variable: [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md). Run `npm run check:s
 npm test                 # unit + integration (policy matrix, API, collab convergence, events, bridge, MCP, CLI)
 npm run e2e              # two real browsers edit one file and converge
 npm run e2e:projects     # projects, people, inbox, member management
-npm run e2e:call-invite  # call invites reach the inbox and one click joins the call
-npm run e2e:call-volume  # per-person volume + screen share keeps the grid
 npm run e2e:signin       # connect Claude / Codex, edit modes, past chats
 npm run e2e:split        # the Vercel + Railway setup: proxy + ticketed sockets
-npm run build:client     # rebuild vendor/ (Yjs + Monaco) after editing src/
+npm run e2e:hub          # Team hub against the real Nexconn service (skipped without NEXCONN_KEY / NEXCONN_SECRET)
+npm run build:client     # rebuild vendor/ (Yjs + Monaco + Nexconn Chat/ChatUI SDKs) after editing src/
 node scripts/readme-shots.mjs   # regenerate the screenshots above
 ```
 

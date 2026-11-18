@@ -56,17 +56,8 @@ try {
   await maya.locator('.file-panel').getByText('App.tsx').first().click(); await maya.waitForTimeout(800); await maya.click('.side-tabs [data-pane="chat"]'); await maya.waitForTimeout(600); await shot(maya, 'workspace');
   await maya.evaluate(() => document.querySelector('#wsMoreBtn')?.click()); await shot(maya, 'workspace-menu', { wait: 500 }); await maya.keyboard.press('Escape'); await maya.mouse.click(10, 10);
 
-  // a call with three people + invite + volume menu
-  for (const p of [maya, arjun, sara]) await p.evaluate(() => window.HC.call.join(window.HC.state.currentProject.id, 'general'));
-  await maya.waitForFunction(() => window.HC.call.state.peers.size === 2, null, { timeout: 20000 }); await maya.waitForTimeout(1000); await shot(maya, 'call-dock');
-  await maya.click('#callDock [data-a="expand"]'); await maya.waitForSelector('#callStage.full'); await shot(maya, 'call-fullscreen', { wait: 1200 });
-  await maya.locator('#callStage .ct:not([data-id="self"])').first().click({ button: 'right' }); await maya.waitForSelector('.vol-menu'); await shot(maya, 'call-volume-menu', { wait: 600 }); await maya.keyboard.press('Escape');
-  await maya.click('#callStage [data-a="invite"]'); await maya.waitForSelector('.inv-pop'); await shot(maya, 'call-invite', { wait: 600 }); await maya.keyboard.press('Escape');
-  await maya.click('#callStage [data-a="leave"]'); await arjun.evaluate(() => window.HC.call.leave()); await sara.evaluate(() => window.HC.call.leave());
-  // inbox with the "join the call" message
+  // calls now run on Nexconn Call (nx-call.js); they need the Call service enabled on the Nexconn app, so they are not captured here
   await maya.evaluate(() => document.querySelector('[data-view="overview"]').click()); await maya.evaluate((id) => window.HackConnectApp.openProject(id), projectId);
-  await maya.evaluate(() => window.HC.call.join(window.HC.state.currentProject.id, 'general')); await maya.waitForSelector('#callDock'); await maya.click('#callDock [data-a="invite"]'); await maya.waitForSelector('.inv-pop .inv-row'); await maya.click('#invSend'); await maya.waitForTimeout(500); await maya.evaluate(() => window.HC.call.leave());
-  await sara.evaluate(() => document.querySelector('[data-view="overview"]').click()); await sara.waitForSelector('.call-invite', { timeout: 20000 }).catch(() => {}); await sara.click('#notifBtn'); await sara.waitForSelector('.ibx .ibx-join'); await shot(sara, 'inbox-call-invite', { wait: 700 });
 
   const phone = await newUser('Phone View', 'phone@example.com', base, { width: 390, height: 800 }); await phone.evaluate(() => document.querySelector('[data-view="projects"]').click()); await shot(phone, 'mobile', { wait: 900 });
   real('Done: docs/screenshots');

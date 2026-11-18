@@ -17,6 +17,8 @@ Node does not load `.env` by itself; `server.mjs` reads it at start and never ov
 | `HACKCONNECT_RUNNER_IMAGE` | `node:22-alpine` | Image used for runs |
 | `HACKCONNECT_RUNNER_RUNTIME` | none | `runsc` to use gVisor if installed |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | none | Enables `POST /api/projects/:id/call-token`. Self-host LiveKit (Apache-2.0) or use its free cloud tier |
+| `NEXCONN_KEY`, `NEXCONN_SECRET` | none | App Key and App Secret from the [Nexconn console](https://console.nexconn.ai). Switch on the **Team hub** (project channels, threads, handover, direct messages, shared AI in chat). The secret never leaves the server; `GET /api/nexconn/session` gives each signed-in person their own access token |
+| `NEXCONN_API_HOST`, `NEXCONN_AREA_CODE` | Singapore (`api.sg-light-api.com`, `2`) | Only for a Nexconn app in another data centre: its Platform API host and the browser SDK area code (1 Beijing, 2 Singapore, 3 North America, 5 South America, 6 Oman) |
 | `HACKCONNECT_BASE_URL` | derived from the request | Public URL of the server (for example `https://hack.example.com`). Used to build the OAuth callback. Set it in production |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | none | Enables **Continue with GitHub** and **Connect GitHub** (repo access for sync). Setup below |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | none | Enables **Continue with Google**. Setup below |
@@ -31,7 +33,7 @@ Node does not load `.env` by itself; `server.mjs` reads it at start and never ov
 | `HACKCONNECT_CONFIG_DIR` | `~/.hackconnect` | Where the Local Bridge stores its token |
 | `CLOUDFLARED` | `cloudflared` | Path to the free `cloudflared` binary used by `hackconnect expose` |
 
-**Not used by the code:** `SERP_API` and `GITHUB_TOKEN` in a local `.env`. GitHub features use each person's own connected GitHub account (via `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET`), never a server-wide token, so `GITHUB_TOKEN` can be deleted (and revoked at GitHub).
+**Not used by the code:** `SERP_API`, `NEXCONN_ACCESSKEY` (a console test-user token; the server issues real per-person tokens) and `GITHUB_TOKEN` in a local `.env`. GitHub features use each person's own connected GitHub account (via `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET`), never a server-wide token, so `GITHUB_TOKEN` can be deleted (and revoked at GitHub).
 
 ## Secrets hygiene
 - `.env` is git-ignored and docker-ignored. `.env.example` must stay free of real values.

@@ -5,7 +5,8 @@
   const STICKERS = ['🚀', '🎉', '🔥', '💯', '🤝', '👏', '😂', '🐛', '☕', '🏆', '🤯', '🫶'];
   const QUICK = ['👍', '❤️', '😂', '🎉', '🚀', '👀'];
   const pid = () => HC.state.currentProject?.id;
-  const post = (text, sticker = false) => pid() && api(`/projects/${pid()}/messages`, { method: 'POST', body: JSON.stringify({ text, sticker }) }).catch(e => notify(e.message));
+  const post = (text, sticker = false) => pid() && (HC.nxChat?.wanted() ? HC.nxChat.send(pid(), text) : api(`/projects/${pid()}/messages`, { method: 'POST', body: JSON.stringify({ text, sticker }) })
+    .catch(e => notify(e.message)));
   const closePop = () => { $('#chatPop')?.remove(); document.removeEventListener('pointerdown', outside, true); };
   const outside = (e) => { if (!e.target.closest('#chatPop, #emojiBtn, #stickerBtn, .rx.add')) closePop(); };
   function pop(anchor, html, place = 'above') { const same = $('#chatPop')?._anchor === anchor; closePop(); if (same) return document.createElement('div'); /* clicking the same button again closes the picker */ const p = document.createElement('div'); p._anchor = anchor; p.id = 'chatPop'; p.className = 'chat-pop'; p.innerHTML = html; document.body.appendChild(p); const r = anchor.getBoundingClientRect(); const pw = p.offsetWidth, ph = p.offsetHeight; p.style.left = Math.max(8, Math.min(innerWidth - pw - 8, r.right - pw)) + 'px'; p.style.top = (place === 'above' ? Math.max(8, r.top - ph - 8) : Math.min(innerHeight - ph - 8, r.bottom + 6)) + 'px'; setTimeout(() => document.addEventListener('pointerdown', outside, true)); return p; }

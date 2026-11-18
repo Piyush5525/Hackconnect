@@ -27,6 +27,7 @@ Vercel cannot carry WebSockets, and browsers refuse cross-site cookies, so the a
 | `HACKCONNECT_TRUST_PROXY` | `true` |
 | `HACKCONNECT_LOG` | `json` |
 | `HACKCONNECT_AGENT_PROVIDER` | `demo` |
+| `NEXCONN_KEY`, `NEXCONN_SECRET` | from the Nexconn console: switches on the Team hub (set them on the backend service, e.g. Railway; never on Vercel) |
 | `HACKCONNECT_MASTER_KEY` | output of `openssl rand -base64 32` (set once, never change) |
 | `SMTP_*`, `GITHUB_*`, `GOOGLE_*` | optional, see `docs/ENVIRONMENT.md` |
 
