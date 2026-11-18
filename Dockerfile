@@ -2,7 +2,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-COPY scripts/build-client.mjs scripts/build-client.mjs
+COPY scripts/build-client.mjs scripts/nexconn-dark.mjs scripts/
 COPY src ./src
 RUN npm ci --ignore-scripts && node scripts/build-client.mjs
 

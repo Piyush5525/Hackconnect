@@ -748,7 +748,7 @@ body.ws-active::before,body.ide-full::before{opacity:.35}
 .hub-wrap{container-type:inline-size}
 .hub{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;min-height:480px}
 .hub-side{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:auto;padding:8px}
-.hub-chat{border-radius:12px;overflow:hidden auto;background:#fff;border:1px solid var(--line);min-width:0;height:100%}
+.hub-chat{border-radius:12px;overflow:hidden auto;background:#141a18;border:1px solid var(--line);min-width:0;height:100%}
 /* ChatUI needs about 912px (its 312px list + a 600px conversation). Below that the project panel becomes a strip of chips above the chat. */
 @container (max-width:1150px){.hub{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.hub-side{display:flex;gap:8px;overflow-x:auto;padding:6px;max-height:none}.hub-proj{display:flex;align-items:center;gap:4px;border:0;border-right:1px solid var(--line);padding:2px 10px 2px 2px;flex:0 0 auto}.hub-proj:last-child{border-right:0}.hub-proj-head{padding:0 6px}.hub-ch,.hub-person{width:auto;white-space:nowrap;padding:5px 8px}.hub-people{display:flex;margin:0;padding:0 0 0 6px;border-top:0;border-left:1px dashed var(--line)}.hub-warn,.hub-people .hub-muted{display:none}}
 .hub-chat nc-chat-ui-app-provider{display:block;height:100%}
@@ -794,3 +794,24 @@ body.ws-active::before,body.ide-full::before{opacity:.35}
 .nx-ring-tx b{display:block;font-size:13px}.nx-ring-tx small{color:var(--muted);font-size:11px}.nx-ring-tx{min-width:140px;margin-right:6px}
 @keyframes nxIn{from{opacity:0;transform:translateY(-8px)}}@keyframes nxPulse{50%{box-shadow:0 0 0 8px rgba(185,240,124,.18)}}
 @media (prefers-reduced-motion:reduce){.nx-ring,.nx-ring-av{animation:none}}
+
+/* ---------- Nexconn layer: live status pill with a 3D orb, glowing chat panel (dark Chat UI comes from scripts/nexconn-dark.mjs) ---------- */
+@property --nx-ang{syntax:'<angle>';inherits:false;initial-value:0deg}
+.nx-live{display:inline-flex;align-items:center;gap:9px;margin-top:12px;padding:5px 12px 5px 6px;border-radius:999px;background:linear-gradient(90deg,rgba(185,240,124,.12),rgba(47,107,255,.10));border:1px solid rgba(185,240,124,.22);font-size:12px;color:var(--soft);animation:nxIn .5s ease both}
+.nx-live b{color:var(--text);font-weight:650}.nx-live small{color:var(--muted);font-size:11px}.nx-live small::before{content:'';display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--muted);margin:0 8px 2px 0;vertical-align:middle}
+.nx-live[data-state=wait]{border-color:rgba(246,169,108,.35);background:rgba(246,169,108,.08)}.nx-live[data-state=off]{border-color:rgba(255,123,114,.4);background:rgba(255,123,114,.08)}
+.nx-orb{--c:#b9f07c;position:relative;width:24px;height:24px;perspective:120px;transform-style:preserve-3d;flex:none}
+.nx-orb::after{content:'';position:absolute;inset:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--c) 45%,color-mix(in srgb,var(--c) 40%,#000));box-shadow:0 0 12px var(--c)}
+.nx-orb i{position:absolute;inset:0;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--c) 75%,transparent);transform-style:preserve-3d;animation:nxSpin 3.2s linear infinite}
+.nx-orb i:nth-child(1){--t:rotateX(70deg)}.nx-orb i:nth-child(2){--t:rotateY(70deg);border-color:rgba(122,160,255,.85);animation-duration:4.4s}.nx-orb i:nth-child(3){--t:rotateX(55deg) rotateY(45deg);animation-duration:5.6s;animation-direction:reverse}
+.nx-live[data-state=wait] .nx-orb{--c:#f6a96c}.nx-live[data-state=wait] .nx-orb i{animation-duration:1.2s}.nx-live[data-state=off] .nx-orb{--c:#ff7b72}.nx-live[data-state=off] .nx-orb i{animation-play-state:paused}
+@keyframes nxSpin{from{transform:var(--t) rotateZ(0)}to{transform:var(--t) rotateZ(360deg)}}
+.hub-chat{border:1px solid transparent;background:linear-gradient(#141a18,#141a18) padding-box,conic-gradient(from var(--nx-ang),rgba(185,240,124,.55),rgba(47,107,255,.45),rgba(42,52,48,.9) 30%,rgba(42,52,48,.9) 70%,rgba(185,240,124,.55)) border-box;box-shadow:0 24px 70px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.02);animation:nxGlow 9s linear infinite}
+@keyframes nxGlow{to{--nx-ang:360deg}}
+.hub-side{background:linear-gradient(180deg,rgba(185,240,124,.04),transparent 140px),var(--panel)}
+.hub-ch,.hub-person{transition:background .18s,color .18s,transform .18s}.hub-ch:hover,.hub-person:hover{transform:translateX(2px)}
+@media (prefers-reduced-motion:reduce){.nx-orb i,.hub-chat,.nx-live{animation:none}.hub-ch:hover,.hub-person:hover{transform:none}}
+.fx-chip.msg{left:-22px;bottom:-30px;animation:fx-floaty 7s ease-in-out -1s infinite;line-height:1.3}
+.fx-msg-av{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#b982ff,#7a4fd1);color:#10170d;font-size:10px;font-weight:800}
+@media (max-width:700px){.fx-chip.msg{display:none}}
+@media (prefers-reduced-motion:reduce){.fx-chip.msg{animation:none}}

@@ -17,16 +17,17 @@
   function showcase(gate) {
     if (gate.dataset.fx || !$('.auth-card', gate)) return; gate.dataset.fx = '1';
     const el = document.createElement('div'); el.className = 'fx-show'; el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = `<span class="fx-eyebrow"><i></i>Live now, for hackathon teams</span>
+    el.innerHTML = `<span class="fx-eyebrow"><i></i>Live now, for hackathon teams · built on Nexconn</span>
       <h1>Your whole team,<br><em>in one room.</em></h1>
-      <p>Edit the same files together, talk it through on a call, ask one shared AI, and hand in a build the judges can replay.</p>
+      <p>Edit the same files together, talk it through in Nexconn channels and calls, ask one shared AI, and hand in a build the judges can replay.</p>
       <div class="fx-stage">
         <div class="fx-editor"><div class="fx-bar"><b></b><b></b><b></b><span>room.ts</span><em>3 editing</em></div>
           <div class="fx-code">${code.map(([line, who], i) => `<div class="fx-line${who ? ` has-${who}` : ''}"><u>${i + 1}</u><span>${line}</span>${who ? `<i class="fx-caret ${who}"><b>${who === 'maya' ? 'Maya' : 'Arjun'}</b></i>` : ''}</div>`).join('')}</div></div>
-        <div class="fx-chip call"><span class="fx-wave"><i></i><i></i><i></i><i></i></span>Sara is talking <small>3 in call</small></div>
+        <div class="fx-chip call"><span class="fx-wave"><i></i><i></i><i></i><i></i></span>Sara is talking <small>Nexconn call · 3 in</small></div>
+        <div class="fx-chip msg"><span class="fx-msg-av">AN</span><span>#general<br><small>Arjun: pushed the fix, try it</small></span></div>
         <div class="fx-chip ai"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>AI proposed a change <small>Review diff</small></div>
       </div>
-      <ul class="fx-points"><li>Live cursors and offline merge</li><li>Voice, video and screen share</li><li>Hackathons with judging and build replay</li></ul>`;
+      <ul class="fx-points"><li>Live cursors and offline merge</li><li>Channels, DMs and calls on Nexconn</li><li>Hackathons with judging and build replay</li></ul>`;
     gate.prepend(el); gate.classList.add('fx-split');
   }
 

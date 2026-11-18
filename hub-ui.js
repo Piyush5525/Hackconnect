@@ -21,7 +21,7 @@
   const svgUrl = (inner, bg = 'none') => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">${bg !== 'none' ? `<rect width="40" height="40" rx="20" fill="${bg}"/>` : ''}${inner}</svg>`)}`;
   const initialsAvatar = (name, seed) => svgUrl(`<text x="20" y="25.5" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="15" font-weight="700" fill="#14200e">${esc(String(name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?')}</text>`, avColor(seed || name || '?'));
   const glyph = (d, fill = '#14200e', bg = '#b9f07c') => svgUrl(`<g transform="translate(8 8) scale(1)" fill="none" stroke="${fill}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</g>`, bg);
-  const button = (d) => svgUrl(`<g transform="translate(8 8)" fill="none" stroke="#41464F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</g>`);
+  const button = (d) => svgUrl(`<g transform="translate(8 8)" fill="none" stroke="#c6d1cb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</g>`);
   const AVATAR = { bot: glyph(I.spark), general: glyph(I.hash), handover: glyph(I.swap, '#14200e', '#f6a96c'), thread: glyph(I.chat, '#14200e', '#7db7e8') };
 
   const S = { status: 'idle', error: '', session: null, hub: { projects: [], people: {} }, C: null, U: null, app: null, current: null, unread: 0, lastHubLoad: 0 };
@@ -52,17 +52,25 @@
     if (S.status === 'error') { view.innerHTML = `<div class="hub-empty"><div class="hub-empty-ic">${icon(I.hub, 30)}</div><h2>Could not connect to team messaging</h2><p>${esc(S.error)}</p><button class="primary-button" id="hubRetry">Try again</button></div>`; $('#hubRetry').addEventListener('click', () => { S.status = 'idle'; show(); }); return; }
     if (S.status !== 'ready') { if (!$('.hub-loading', view)) view.innerHTML = `<div class="hub-empty hub-loading"><div class="hub-empty-ic spin">${icon(I.hub, 30)}</div><h2>Connecting to your team…</h2><p>Setting up your project channels.</p></div>`; return; }
     if (!$('#hubChat', view)) { // the ChatUI element is created once and kept: re-creating it would drop the open conversation
-      view.innerHTML = `<div class="page-heading hub-heading"><div><h1>Team hub</h1><p>Every project gets <b>#general</b> and <b>#handover</b>. Start a thread for a topic, message a teammate, or type <code>/ai</code> to ask the assistant for the whole team.</p></div><div class="heading-actions"><button class="outline-button" id="hubDm">${icon(I.chat, 14)} Message a teammate</button><button class="primary-button" id="hubThread">${icon(I.plus, 14)} New thread</button></div></div>
+      view.innerHTML = `<div class="page-heading hub-heading"><div><h1>Team hub</h1><p>Every project gets <b>#general</b> and <b>#handover</b>. Start a thread for a topic, message a teammate, or type <code>/ai</code> to ask the assistant for the whole team.</p><div class="nx-live" id="hubLive" role="status" aria-live="polite"><span class="nx-orb" aria-hidden="true"><i></i><i></i><i></i></span><b></b><small></small></div></div><div class="heading-actions"><button class="outline-button" id="hubDm">${icon(I.chat, 14)} Message a teammate</button><button class="primary-button" id="hubThread">${icon(I.plus, 14)} New thread</button></div></div>
         <div class="hub-wrap"><div class="hub"><aside class="hub-side" id="hubSide" aria-label="Projects and people"></aside><div class="hub-chat" id="hubChat"></div></div></div>`;
       $('#hubChat', view).appendChild(document.createElement('nc-chat-ui-app-provider'));
       $('#hubThread', view).addEventListener('click', () => newThread()); $('#hubDm', view).addEventListener('click', pickTeammate);
     }
     paintSide(); fit();
   }
+  // live connection pill: Nexconn's own connection status plus what this person can reach
+  function paintLive() {
+    const el = $('#hubLive'); if (!el) return; const st = S.conn ?? 0; const state = st === 0 ? 'on' : st === 1 ? 'wait' : 'off';
+    el.dataset.state = state; $('b', el).textContent = state === 'on' ? 'Live on Nexconn' : state === 'wait' ? 'Connecting to Nexconn…' : 'Offline, Nexconn is reconnecting…';
+    const projects = S.hub?.projects || []; const channels = projects.reduce((n, p) => n + p.channels.length, 0); const people = new Set(projects.flatMap((p) => p.members.map((m) => m.nx)).filter((nx) => nx !== S.hub?.me)).size;
+    $('small', el).textContent = `${channels} channel${channels === 1 ? '' : 's'} · ${people} teammate${people === 1 ? '' : 's'}`;
+  }
   function fit() { const hub = $('.hub'); if (!hub || !$('#hubView')?.classList.contains('active')) return; hub.style.height = `${Math.max(480, innerHeight - (hub.getBoundingClientRect().top + scrollY) - 28)}px`; }
   addEventListener('resize', fit);
 
   function paintSide() {
+    paintLive();
     const side = $('#hubSide'); if (!side) return; const cur = S.current;
     const projects = S.hub.projects;
     side.innerHTML = projects.length ? projects.map((p) => `<div class="hub-proj"><div class="hub-proj-head"><b title="${esc(p.name)}">${esc(p.name)}</b>${p.role !== 'viewer' ? `<button class="hub-mini" data-thread="${esc(p.id)}" title="Start a thread in ${esc(p.name)}" aria-label="Start a thread in ${esc(p.name)}">${icon(I.plus, 13)}</button>` : ''}</div>
@@ -105,7 +113,7 @@
     connectedCallback() { this.paint(); }
     paint() {
       const c = this._m?.content || {}; const row = (label, text, tone) => (String(text || '').trim() ? `<div class="r ${tone}"><b>${label}</b><p>${esc(text)}</p></div>` : '');
-      this.shadowRoot.innerHTML = `<style>:host{display:block;max-width:420px}.card{border:1px solid #f3c79e;border-radius:12px;background:#fffaf5;padding:10px 12px;font:13px/1.45 Inter,Segoe UI,system-ui,sans-serif;color:#020814}.h{display:flex;gap:6px;align-items:center;font-weight:700;color:#a85a1b;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}.r{border-left:3px solid #d8dde6;padding:2px 0 2px 9px;margin-top:7px}.r b{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#41464F}.r p{margin:2px 0 0;white-space:pre-wrap;word-break:break-word}.done{border-color:#7fc94a}.next{border-color:#5d9be0}.blocked{border-color:#e2685f}.f{margin-top:8px;color:#7C838E;font-size:11px}</style>
+      this.shadowRoot.innerHTML = `<style>:host{display:block;max-width:420px}.card{border:1px solid rgba(246,169,108,.35);border-radius:14px;background:linear-gradient(160deg,rgba(246,169,108,.12),rgba(246,169,108,.03) 60%),#1a201e;padding:11px 13px;font:13px/1.45 Inter,Segoe UI,system-ui,sans-serif;color:#edf3ee;box-shadow:0 10px 30px rgba(0,0,0,.25)}.h{display:flex;gap:6px;align-items:center;font-weight:700;color:#f6a96c;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}.r{border-left:3px solid #2a3430;padding:2px 0 2px 9px;margin-top:7px}.r b{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#8a9892}.r p{margin:2px 0 0;white-space:pre-wrap;word-break:break-word}.done{border-color:#b9f07c}.next{border-color:#7db7e8}.blocked{border-color:#ff7b72}.f{margin-top:8px;color:#8a9892;font-size:11px}</style>
         <div class="card"><div class="h">⇄ Handover${c.until ? ` · back ${esc(c.until)}` : ''}</div>${row('Done', c.done, 'done')}${row('Next up', c.next, 'next')}${row('Blocked on', c.blocked, 'blocked')}${c.by ? `<div class="f">From ${esc(c.by)}</div>` : ''}</div>`;
     }
   }
@@ -122,11 +130,12 @@
         C.NCEngine.initialize({ appKey: session.appKey, areaCode: session.areaCode || C.AreaCode.SG, logLevel: C.LogLevel?.WARN });
         const app = U.NCChatUIApplication.initialize({ hooks, language: 'en_US', allowedToRecallTime: 300 }); if (!app) throw new Error('The chat interface could not start in this browser.');
         S.app = app; configure(app); app.ready();
+        if (C.ConnectionStatusHandler) C.NCEngine.addConnectionStatusHandler('hc-hub', new C.ConnectionStatusHandler({ onConnectionStatusChanged: ({ status }) => { S.conn = status; paintLive(); } }));
         C.NCEngine.addMessageHandler('hc-hub', new C.MessageHandler({ onMessageReceived: ({ messages }) => onIncoming(messages || []) }));
       }
       const result = await C.NCEngine.connect({ token: session.token });
       if (!result.isOk) throw new Error(`Messaging sign-in was refused (code ${result.code}). Try again in a moment.`);
-      S.status = 'ready'; render(); countUnread();
+      S.status = 'ready'; S.conn = 0; render(); countUnread();
       const remembered = (() => { try { return JSON.parse(localStorage.getItem('hc.hub.current') || 'null'); } catch { return null; } })();
       if (remembered?.type === 'group' && findChannel(remembered.id)) openGroup(remembered.id, false);
     } catch (error) { console.error(error); S.status = 'error'; S.error = error.message || 'Unknown error'; render(); }
@@ -137,8 +146,8 @@
     // registerLanguagePack replaces the whole pack, so start from the built-in English entries and change a few lines.
     app.registerLanguagePack('en_US', { ...(app.cloneLanguageEntries('en_US') || {}), 'channel.list.bar.title': 'Conversations', 'channel.list.empty.desc': 'No conversations yet. Open a project channel or a teammate.', 'channel.empty.desc': 'Pick a channel or a teammate to start talking.', 'input.placeholder': 'Message… start with /ai to ask the assistant' });
     app.setCommandSwitch(U.ChatUICommand.PROMPT_SENDER_WHEN_QUOTE_MESSAGE, true);
-    app.setMessageBubbleConfig({ layout: U.BubbleLayout.LEFT_RIGHT, redius: 12, backgroundColorForMyself: 0xd9f5bc, textColorForMyself: 0x14200e, backgroundColorForOthers: 0xf3f5fa, textColorForOthers: 0x020814, showOthersNameInGroupChannel: true, showOthersProfileInGroupChannel: true, showOthersProfileInDirectionChannel: true });
-    app.setChannelsItemConfig({ radius: 10, portraitSize: 'small', topBackgroundColor: 0xf4faec, hoverBackgroundColor: 0xf3f5fa, activeBackgroundColor: 0xe3f5cf });
+    app.setMessageBubbleConfig({ layout: U.BubbleLayout.LEFT_RIGHT, redius: 12, backgroundColorForMyself: 0xb9f07c, textColorForMyself: 0x10170d, backgroundColorForOthers: 0x1f2826, textColorForOthers: 0xedf3ee, showOthersNameInGroupChannel: true, showOthersProfileInGroupChannel: true, showOthersProfileInDirectionChannel: true });
+    app.setChannelsItemConfig({ radius: 10, portraitSize: 'small', topBackgroundColor: 0x182019, hoverBackgroundColor: 0x1d2522, activeBackgroundColor: 0x243020 });
     app.registerCustomMessages([{ messageType: HANDOVER, isPersisted: true, isCounted: true, digest: (m) => `[Handover]${m.content?.next ? ` Next: ${String(m.content.next).slice(0, 60)}` : ''}`, component: { tagName: 'handover', elementClass: HandoverMessage } }]);
     const group = (m) => m.channelType === C.ChannelType.GROUP && Boolean(findChannel(m.channelId));
     const callable = (m) => m.channelType === C.ChannelType.DIRECT ? m.channelId !== S.session?.bot?.id : group(m);

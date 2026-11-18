@@ -20,15 +20,15 @@
     <circle cx="32" cy="32" r="7.5" fill="#d4f99d" stroke="#10170d" stroke-width="3.5"/><circle cx="32" cy="32" r="2.2" fill="#10170d"/>
   </g>
   <text x="270" y="170" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="82" font-weight="800" fill="#f2f7f4" letter-spacing="-2">hack<tspan fill="url(#word)">connect</tspan></text>
-  <text x="272" y="222" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="27" fill="#a9b8b1">Build hackathon projects together, live.</text>
+  <text x="272" y="222" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="27" fill="#a9b8b1">Build hackathon projects together, live, on Nexconn.</text>
 
   <!-- feature pills -->
   <g font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="17" font-weight="600">
-    <g transform="translate(96 292)"><rect width="196" height="42" rx="21" fill="#58e0aa" fill-opacity=".13" stroke="#58e0aa" stroke-opacity=".45"/><text x="98" y="27" text-anchor="middle" fill="#58e0aa">Live co-editing</text></g>
-    <g transform="translate(308 292)"><rect width="170" height="42" rx="21" fill="#5a8cff" fill-opacity=".13" stroke="#5a8cff" stroke-opacity=".45"/><text x="85" y="27" text-anchor="middle" fill="#9db8ff">Voice &amp; video</text></g>
-    <g transform="translate(494 292)"><rect width="208" height="42" rx="21" fill="#b982ff" fill-opacity=".13" stroke="#b982ff" stroke-opacity=".45"/><text x="104" y="27" text-anchor="middle" fill="#d2b0ff">AI with approval</text></g>
-    <g transform="translate(718 292)"><rect width="180" height="42" rx="21" fill="#f5c84b" fill-opacity=".12" stroke="#f5c84b" stroke-opacity=".45"/><text x="90" y="27" text-anchor="middle" fill="#f5c84b">Hackathons</text></g>
-    <g transform="translate(914 292)"><rect width="216" height="42" rx="21" fill="#ff8d8d" fill-opacity=".12" stroke="#ff8d8d" stroke-opacity=".45"/><text x="108" y="27" text-anchor="middle" fill="#ff9f9f">Judging &amp; replay</text></g>
+    <g transform="translate(96 292)"><rect width="250" height="42" rx="21" fill="#2f6bff" fill-opacity=".18" stroke="#2f6bff" stroke-opacity=".55"/><text x="125" y="27" text-anchor="middle" fill="#8fb0ff">Nexconn chat &amp; calls</text></g>
+    <g transform="translate(360 292)"><rect width="190" height="42" rx="21" fill="#58e0aa" fill-opacity=".13" stroke="#58e0aa" stroke-opacity=".55"/><text x="95" y="27" text-anchor="middle" fill="#58e0aa">Live co-editing</text></g>
+    <g transform="translate(564 292)"><rect width="200" height="42" rx="21" fill="#b982ff" fill-opacity=".13" stroke="#b982ff" stroke-opacity=".55"/><text x="100" y="27" text-anchor="middle" fill="#d2b0ff">AI with approval</text></g>
+    <g transform="translate(778 292)"><rect width="150" height="42" rx="21" fill="#f5c84b" fill-opacity=".12" stroke="#f5c84b" stroke-opacity=".55"/><text x="75" y="27" text-anchor="middle" fill="#f5c84b">Hackathons</text></g>
+    <g transform="translate(942 292)"><rect width="200" height="42" rx="21" fill="#ff8d8d" fill-opacity=".12" stroke="#ff8d8d" stroke-opacity=".55"/><text x="100" y="27" text-anchor="middle" fill="#ff9f9f">Judging &amp; replay</text></g>
   </g>
 
   <!-- decorative editor window -->
